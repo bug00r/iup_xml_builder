@@ -1,0 +1,25 @@
+<dialog>
+    <params>
+        <hbox>
+            <label>
+                <!-- value=":c" means text content of node <attr>textcontent</attr> -->
+                <attr name="ACTIVE" value="NO" />
+                <attr name="TITLE" value=":c" >Langes Label:</attr>
+                <attr type="handle" name="IMAGE" value="image_handle_name" />
+            </label>
+            <list name="mylist">
+                <attr name="1" value="first" />
+                <attr name="2" value="second" />
+                <attr name="3" value="third" />
+                <attr name="4" value="fourth" />
+                <attr name="DROWDOWN" value="YES" />
+            </list>
+            <text name="mytext">
+                <attr name="VALUE" value="Some text isn't it?" />
+                <attr name="RASTERSIZE" value="125" />
+            </text>
+        </hbox>
+    </params>
+    <attr name="TITLE" value="generic iup Dialog" />
+    <attr name="SIZE" value="HALF" />
+</dialog>
