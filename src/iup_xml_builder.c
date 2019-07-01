@@ -190,7 +190,7 @@ static bool is_params_string(const char *text) {
 }
 
 static bool is_value_content(const char *value) {
-    return (strcmp(value, ":c") == 0);
+    return (value != NULL && (strcmp(value, ":c") == 0));
 }
 
 static void __iup_xb_config_handle(iup_xml_builder_t *builder, Ihandle * _handle, iup_xb_parse_entity_t *conf_entity) {
@@ -202,13 +202,15 @@ static void __iup_xb_config_handle(iup_xml_builder_t *builder, Ihandle * _handle
         while(cur_node != NULL) {
             iup_xb_handle_t * handle = (iup_xb_handle_t *)cur_node->data;
             
-            IupAppend(_handle, handle->handle);
+            if (handle) {
+                IupAppend(_handle, handle->handle);
 
-            if(handle->name != NULL) {
+                if(handle->name != NULL) {
 
-                DEBUG_LOG_ARGS("handle with name %s = %p\n", handle->name, handle->handle);
+                    DEBUG_LOG_ARGS("handle with name %s = %p\n", handle->name, handle->handle);
 
-                IupSetStrAttribute(builder->handles, handle->name, (void*)handle->handle);
+                    IupSetStrAttribute(builder->handles, handle->name, (void*)handle->handle);
+                }
             }
 
             cur_node = cur_node->next;
@@ -220,9 +222,11 @@ static void __iup_xb_config_handle(iup_xml_builder_t *builder, Ihandle * _handle
             
             iup_xb_attr_t * attr = (iup_xb_attr_t *)cur_node->data;
 
-            DEBUG_LOG_ARGS("set attr %s = %s\n", attr->name, attr->value);
+            if (attr) {
+                DEBUG_LOG_ARGS("set attr %s = %s\n", attr->name, attr->value);
 
-            IupSetStrAttribute(_handle, attr->name, attr->value);
+                IupSetStrAttribute(_handle, attr->name, attr->value);
+            }
 
             cur_node = cur_node->next;
         }
@@ -232,11 +236,13 @@ static void __iup_xb_config_handle(iup_xml_builder_t *builder, Ihandle * _handle
         while(cur_node != NULL) {
             
             iup_xb_attr_t * callback = (iup_xb_attr_t *)cur_node->data;
+            
+            if (callback) {
+                DEBUG_LOG_ARGS("set callback %s = %s\n", callback->name, callback->value);
 
-            DEBUG_LOG_ARGS("set callback %s = %s\n", callback->name, callback->value);
+                IupSetCallback(_handle, callback->value, (Icallback)IupGetAttribute(builder->callbacks, callback->name));
 
-            IupSetCallback(_handle, callback->value, (Icallback)IupGetAttribute(builder->callbacks, callback->name));
-
+            }
             cur_node = cur_node->next;
         }
 
@@ -391,12 +397,11 @@ static iup_xb_attr_t* __iup_xb_attr_get(xmlNodePtr node) {
     iup_xb_attr_t *result = NULL;
 
     xmlChar *name = xmlGetProp(node, (xmlChar *)"name");
+    xmlChar *value = xmlGetProp(node, (xmlChar *)"value");
 
-    if (name != NULL) {
+    if (name != NULL && value != NULL) {
         
-        xmlChar *value = xmlGetProp(node, (xmlChar *)"value");
-
-        if (is_value_content((const char*)value))  {
+        if ( is_value_content((const char*)value))  {
             xmlFree(value);
             value = xmlNodeGetContent(node);
         } 
@@ -406,6 +411,10 @@ static iup_xb_attr_t* __iup_xb_attr_get(xmlNodePtr node) {
             result->name = name;
             result->value = value;
         }
+
+    } else {
+        xmlFree(name);
+        xmlFree(value);
     }
 
     return result;
@@ -450,36 +459,47 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
             //if(is_params(node->name)) {
             if (is_params(curChild)) {
                 
-                DEBUG_LOG("param found:");
+                DEBUG_LOG("param found:\n");
 
                 iup_xb_params_t * param = NULL;
                 //is parameter
                 if(is_params_string(curChild->name)) {
+                    
                     param = __iup_xb_str_param_get(curChild);
-                    DEBUG_LOG_ARGS("is string = %s \n", param->str_value);
+                    
                 } else {
                     //is handle
                     DEBUG_LOG("is handle: \n");
 
                     Ihandle * p_child = __iup_xb_parse_node(builder, cur_entity, curChild);
 
-                    DEBUG_LOG_ARGS("handle obj: %p\n", p_child);
+                    if ( p_child ) {
+                        DEBUG_LOG_ARGS("handle obj: %p\n", p_child);
 
-                    param = __iup_xb_handle_param_get(builder, curChild, p_child, cur_entity);
+                        param = __iup_xb_handle_param_get(builder, curChild, p_child, cur_entity);
 
-                    DEBUG_LOG_ARGS("handle = %p name = \n", param->value->handle, param->value->name);
+                        DEBUG_LOG_ARGS("handle = %p name = \n", param->value->handle, param->value->name);
+                    }
                 }
 
-                dl_list_append(parent_entity->params, param);
+                if ( param ) {
+                    dl_list_append(parent_entity->params, param);
+                }
 
             } else if(is_attribute(curChild->name)) {
                 //is attribute
                 iup_xb_attr_t *attr = __iup_xb_attr_get(curChild);
-                dl_list_append(parent_entity->attrs, attr);
-
+                if (attr) {
+                    dl_list_append(parent_entity->attrs, attr);
+                }
+                
             } else if (is_callback(curChild->name)) {
                 iup_xb_attr_t *callback = __iup_xb_callback_get(curChild);
-                dl_list_append(parent_entity->callbacks, callback);
+                
+                if (callback) {
+                    dl_list_append(parent_entity->callbacks, callback);
+                }
+                
             } else {
                 //is children
                 Ihandle * child_handle = __iup_xb_parse_node(builder, cur_entity, curChild);
@@ -490,7 +510,10 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
                 
                 iup_xb_handle_t* child = __iup_xb_handle_create(child_handle, curChild);
                 
-                dl_list_append(parent_entity->children, child);
+                if (child) {
+                    dl_list_append(parent_entity->children, child);
+                }
+                
             }
 
             iup_xb_parse_entity_reset(cur_entity);
