@@ -30,6 +30,8 @@ static void test_xml_builder_parse_file() {
 
     Ihandle *handle = iup_xml_builder_parse(builder);
 
+    IupShowXY(handle, IUP_CENTER, IUP_CENTER);
+
     assert(handle != NULL);
 
     iup_xml_builder_free(&builder);
@@ -41,13 +43,19 @@ static void test_xml_builder_parse_file() {
 
 int main(int argc, char **argv) {
 
+    IupOpen(&argc, &argv);
+
 	DEBUG_LOG(">> Start xml builder tests:\n");
 
     test_xml_builder_alloc_free();
 
     test_xml_builder_parse_file();
 
+    IupMainLoop();
+
 	DEBUG_LOG("<< end builder tests:\n");
+
+    IupClose();
 
 	return 0;
 }

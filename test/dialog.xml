@@ -1,25 +1,30 @@
 <dialog>
-    <params>
-        <hbox>
+    <!--<params>-->
+        <vbox param="-">
             <label>
                 <!-- value=":c" means text content of node <attr>textcontent</attr> -->
+                <!-- this string is for parameter if needed -->
+                <!-- <string param="-" value=":c" >Langes Label:</string>-->
+                <string param="-" value="ein label:" />
                 <attr name="ACTIVE" value="NO" />
-                <attr name="TITLE" value=":c" >Langes Label:</attr>
-                <attr type="handle" name="IMAGE" value="image_handle_name" />
+                <!--<attr name="TITLE" value=":c" >Langes Label:</attr>-->
+                <!--<attr name="RASTERSIZE" value="56" />-->
+                <!--<attr type="handle" name="IMAGE" value="image_handle_name" />-->
             </label>
             <list name="mylist">
                 <attr name="1" value="first" />
                 <attr name="2" value="second" />
                 <attr name="3" value="third" />
                 <attr name="4" value="fourth" />
-                <attr name="DROWDOWN" value="YES" />
+                <attr name="DROPDOWN" value="YES" />
+                <attr name="VALUE" value="3" />
             </list>
             <text name="mytext">
                 <attr name="VALUE" value="Some text isn't it?" />
                 <attr name="RASTERSIZE" value="125" />
             </text>
-        </hbox>
-    </params>
+        </vbox>
+    <!--</params>-->
     <attr name="TITLE" value="generic iup Dialog" />
-    <attr name="SIZE" value="HALF" />
+    <attr name="SIZE" value="HALFxHALF" />
 </dialog>

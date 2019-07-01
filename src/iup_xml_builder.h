@@ -1,7 +1,9 @@
 #ifndef IUP_XML_BUILDER_H
 #define IUP_XML_BUILDER_H
 
+#include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <iup.h>
 
 #include "dl_list.h"
@@ -30,6 +32,7 @@
 typedef struct {
     dl_list_t *xml_res;
     dl_list_t *err;
+	Ihandle * handles;
 } iup_xml_builder_t;
 
 iup_xml_builder_t* iup_xml_builder_new();
