@@ -19,6 +19,13 @@ static void test_xml_builder_alloc_free() {
     DEBUG_LOG("<<<\n");
 }
 
+int test_callback_btn(Ihandle* ih) {
+
+    IupMessage("button event message", "triggered from predefined Callback :)");
+
+    return IUP_DEFAULT;
+}
+
 static void test_xml_builder_parse_file() {
     DEBUG_LOG(">>>\n");
 
@@ -27,6 +34,8 @@ static void test_xml_builder_parse_file() {
     assert(builder != NULL);
 
     iup_xml_builder_add_file(builder, "dialog.xml");
+
+    iup_xml_builder_add_callback(builder, "testcallback", (Icallback)test_callback_btn);
 
     Ihandle *handle = iup_xml_builder_parse(builder);
 

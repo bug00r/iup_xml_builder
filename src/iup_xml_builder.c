@@ -4,6 +4,7 @@ typedef struct {
     dl_list_t *params;
     dl_list_t *attrs;
     dl_list_t *children;
+    dl_list_t *callbacks;
 } iup_xb_parse_entity_t;
 
 typedef struct {
@@ -35,6 +36,7 @@ static iup_xb_parse_entity_t *iup_xb_parse_entity_new() {
         newentity->params = dl_list_new();
         newentity->attrs = dl_list_new();
         newentity->children = dl_list_new();
+        newentity->callbacks = dl_list_new();
     }
 
     return newentity;
@@ -121,6 +123,9 @@ static void iup_xb_parse_entity_reset(iup_xb_parse_entity_t *entity) {
         //delete attr
         dl_list_each(to_reset->attrs, iup_xb_delete_attr);
         dl_list_clear(to_reset->attrs);
+        //delete callbacks
+        dl_list_each(to_reset->callbacks, iup_xb_delete_attr);
+        dl_list_clear(to_reset->callbacks);
         //delete children
         dl_list_each(to_reset->children, iup_xb_delete_handle);
         dl_list_clear(to_reset->children);
@@ -137,6 +142,8 @@ static void iup_xb_parse_entity_free(iup_xb_parse_entity_t **entity) {
         dl_list_free(&to_delete->attrs);
         dl_list_free(&to_delete->params);
         dl_list_free(&to_delete->children);
+        dl_list_free(&to_delete->callbacks);
+        
         free(to_delete);
         *entity = NULL;
     }
@@ -154,7 +161,7 @@ static void __iup_xml_builder_xml_res_free(iup_xml_builder_t *builder) {
 		cur_node = cur_node->next;
 	}
 
-    dl_list_free(&builder->err);
+    dl_list_free(&builder->xml_res);
 }
 
 static void __iup_xml_builder_err_free(iup_xml_builder_t *builder) {
@@ -168,10 +175,14 @@ static bool is_attribute(const char *text) {
     return (strcmp(text, "attr") == 0);
 }
 
+static bool is_callback(const char *text) {
+    return (strcmp(text, "callback") == 0);
+}
+
 static bool is_params(xmlNodePtr node) {
 
     return (xmlHasProp(node, (xmlChar*)"param") != NULL);
-    //return (strcmp(text, "params") == 0);
+
 }
 
 static bool is_params_string(const char *text) {
@@ -182,7 +193,7 @@ static bool is_value_content(const char *value) {
     return (strcmp(value, ":c") == 0);
 }
 
-static void __iup_xb_config_handle(Ihandle * _handle, iup_xb_parse_entity_t *conf_entity) {
+static void __iup_xb_config_handle(iup_xml_builder_t *builder, Ihandle * _handle, iup_xb_parse_entity_t *conf_entity) {
     
     if(_handle != NULL && conf_entity != NULL) {
 
@@ -192,6 +203,13 @@ static void __iup_xb_config_handle(Ihandle * _handle, iup_xb_parse_entity_t *con
             iup_xb_handle_t * handle = (iup_xb_handle_t *)cur_node->data;
             
             IupAppend(_handle, handle->handle);
+
+            if(handle->name != NULL) {
+
+                DEBUG_LOG_ARGS("handle with name %s = %p\n", handle->name, handle->handle);
+
+                IupSetStrAttribute(builder->handles, handle->name, (void*)handle->handle);
+            }
 
             cur_node = cur_node->next;
         }
@@ -205,6 +223,19 @@ static void __iup_xb_config_handle(Ihandle * _handle, iup_xb_parse_entity_t *con
             DEBUG_LOG_ARGS("set attr %s = %s\n", attr->name, attr->value);
 
             IupSetStrAttribute(_handle, attr->name, attr->value);
+
+            cur_node = cur_node->next;
+        }
+
+        cur_node = conf_entity->callbacks->first;
+
+        while(cur_node != NULL) {
+            
+            iup_xb_attr_t * callback = (iup_xb_attr_t *)cur_node->data;
+
+            DEBUG_LOG_ARGS("set callback %s = %s\n", callback->name, callback->value);
+
+            IupSetCallback(_handle, callback->value, (Icallback)IupGetAttribute(builder->callbacks, callback->name));
 
             cur_node = cur_node->next;
         }
@@ -236,14 +267,20 @@ static Ihandle* __iup_xb_handle_from_node(iup_xml_builder_t *builder, xmlNodePtr
                 iup_xb_params_t* param = (iup_xb_params_t*)cur_node->data;
 
                 if (param->type == IUP_XB_HANDLE_PARAM) {
+
                     iup_xb_handle_t* handle_param = (iup_xb_handle_t*)param->value;
+                    
                     params[cnt++] = (void*)handle_param->handle;
 
                     DEBUG_LOG_ARGS("param %i = %p\n", cnt, handle_param->handle);
 
                     if (handle_param->name != NULL) {
+                        
+                        DEBUG_LOG_ARGS("handle with name %s = %p\n", handle_param->name, handle_param->handle);
+
                         handle_w_name[cnt_handle++] = handle_param;
                     } 
+
                 } else {
                     
                     DEBUG_LOG_ARGS("param %i = %s\n", cnt, param->str_value);
@@ -267,10 +304,10 @@ static Ihandle* __iup_xb_handle_from_node(iup_xml_builder_t *builder, xmlNodePtr
             result = IupCreate(node->name);
         }
         
-
         DEBUG_LOG_ARGS("class done: %p\n", result);
 
         if (cnt > 0) {
+
             for(uint32_t handl = 0; handl < cnt_handle ; ++handl) {
 
                 iup_xb_handle_t * curhandle = handle_w_name[handl];
@@ -335,14 +372,14 @@ static iup_xb_handle_t* __iup_xb_handle_create(Ihandle *_handle, xmlNodePtr node
     return handlet;
 }
 
-static iup_xb_params_t* __iup_xb_handle_param_get(xmlNodePtr node, Ihandle *param, iup_xb_parse_entity_t *cur_entity) {
+static iup_xb_params_t* __iup_xb_handle_param_get(iup_xml_builder_t *builder, xmlNodePtr node, Ihandle *param, iup_xb_parse_entity_t *cur_entity) {
     iup_xb_params_t *result = NULL;
 
     if (param != NULL && cur_entity != NULL) {
         
         DEBUG_LOG("CONFIG_HANDLE\n");
 
-        __iup_xb_config_handle(param, cur_entity);
+        __iup_xb_config_handle(builder, param, cur_entity);
 
         result = __iup_xb_handle_param_create(param, node);
     }
@@ -363,6 +400,26 @@ static iup_xb_attr_t* __iup_xb_attr_get(xmlNodePtr node) {
             xmlFree(value);
             value = xmlNodeGetContent(node);
         } 
+
+        if (value != NULL) {
+            result = iup_xb_parse_attr_new();
+            result->name = name;
+            result->value = value;
+        }
+    }
+
+    return result;
+}
+
+static iup_xb_attr_t* __iup_xb_callback_get(xmlNodePtr node) {
+    
+    iup_xb_attr_t *result = NULL;
+
+    xmlChar *name = xmlGetProp(node, (xmlChar *)"name");
+
+    if (name != NULL) {
+        
+        xmlChar *value = xmlGetProp(node, (xmlChar *)"event");
 
         if (value != NULL) {
             result = iup_xb_parse_attr_new();
@@ -408,7 +465,7 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
 
                     DEBUG_LOG_ARGS("handle obj: %p\n", p_child);
 
-                    param = __iup_xb_handle_param_get(curChild, p_child, cur_entity);
+                    param = __iup_xb_handle_param_get(builder, curChild, p_child, cur_entity);
 
                     DEBUG_LOG_ARGS("handle = %p name = \n", param->value->handle, param->value->name);
                 }
@@ -419,13 +476,17 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
                 //is attribute
                 iup_xb_attr_t *attr = __iup_xb_attr_get(curChild);
                 dl_list_append(parent_entity->attrs, attr);
+
+            } else if (is_callback(curChild->name)) {
+                iup_xb_attr_t *callback = __iup_xb_callback_get(curChild);
+                dl_list_append(parent_entity->callbacks, callback);
             } else {
                 //is children
                 Ihandle * child_handle = __iup_xb_parse_node(builder, cur_entity, curChild);
                 
                 DEBUG_LOG("CONFIG_HANDLE\n");
                 
-                __iup_xb_config_handle(child_handle, cur_entity);
+                __iup_xb_config_handle(builder, child_handle, cur_entity);
                 
                 iup_xb_handle_t* child = __iup_xb_handle_create(child_handle, curChild);
                 
@@ -464,6 +525,7 @@ iup_xml_builder_t* iup_xml_builder_new() {
         newbuilder->err = dl_list_new();
         newbuilder->xml_res = dl_list_new();
         newbuilder->handles = IupUser();
+        newbuilder->callbacks = IupUser();
     }
 
     return newbuilder;
@@ -479,20 +541,35 @@ void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char * buffer, 
     dl_list_append(builder->xml_res, newsrc);
 }
 
+void iup_xml_builder_add_callback(iup_xml_builder_t *builder, const char* clbk_name, Icallback callback) {
+    if (builder != NULL && clbk_name != NULL && callback != NULL) {
+        IupSetAttribute(builder->callbacks, clbk_name, (void*)callback);
+    }
+}
+
+void iup_xml_builder_rem_callback(iup_xml_builder_t *builder, const char* clbk_name) {
+    if (builder != NULL && clbk_name != NULL ) {
+        IupSetAttribute(builder->callbacks, clbk_name, NULL);
+    }
+}
+
 Ihandle *iup_xml_builder_parse(iup_xml_builder_t *builder) {
 
     dl_list_item_t* cur_node = builder->xml_res->first;
 
     Ihandle *result = NULL;
-	while(cur_node != NULL) {
+	
+    while(cur_node != NULL) {
+
         xmlDocPtr curxml = (xmlDocPtr)cur_node->data;
-		if ( curxml ) {
+		
+        if ( curxml ) {
             
             iup_xb_parse_entity_t *cur_entity = iup_xb_parse_entity_new(); 
 
             result = __iup_xb_parse_node(builder, cur_entity, xmlDocGetRootElement(curxml));
 
-            __iup_xb_config_handle(result, cur_entity);
+            __iup_xb_config_handle(builder, result, cur_entity);
 
             iup_xb_parse_entity_free(&cur_entity);
 		}
@@ -509,6 +586,10 @@ void iup_xml_builder_free(iup_xml_builder_t **builder) {
 
         __iup_xml_builder_xml_res_free(to_delete);
         __iup_xml_builder_err_free(to_delete);
+
+        IupDestroy(to_delete->handles);
+        IupDestroy(to_delete->callbacks);
+
         free(to_delete);
         *builder = NULL;
     }

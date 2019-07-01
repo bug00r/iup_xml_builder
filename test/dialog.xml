@@ -1,6 +1,10 @@
 <dialog>
     <!--<params>-->
         <vbox param="-">
+            <button>
+                <attr name="TITLE" value="ein button" />
+                <callback event="ACTION" name="testcallback" />
+            </button>
             <label>
                 <!-- value=":c" means text content of node <attr>textcontent</attr> -->
                 <!-- this string is for parameter if needed -->
