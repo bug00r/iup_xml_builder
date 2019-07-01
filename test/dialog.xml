@@ -14,11 +14,15 @@
                 <attr name="TITLE" value="ein button" />
                 <callback event="ACTION" name="testcallback" />
             </button>
+            <flatbutton>
+                <attr name="TITLE" value="ein button" />
+                <callback event="FLAT_ACTION" name="testcallback" />
+            </flatbutton>
             <label>
                 <!-- value=":c" means text content of node <attr>textcontent</attr> -->
                 <!-- this string is for parameter if needed -->
                 <!-- <string param="-" value=":c" >Langes Label:</string>-->
-                <string param="-" value=":c" >Ein super mega langes label</string>
+                <string param="-" value=":c" ><![CDATA[<b>Ein super mega langes label</b>]]></string>
                 <attr name="ACTIVE" value="NO" />
                 <!--<attr name="TITLE" value=":c" >Langes Label:</attr>-->
                 <!--<attr name="RASTERSIZE" value="56" />-->
