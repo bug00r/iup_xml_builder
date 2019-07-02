@@ -117,28 +117,21 @@ static void iup_xb_delete_attr(void **data) {
     }
 }
 
+static void __iup_xb_clear_list(dl_list_t *list, void (*deletefunc)(void**)) {
+    dl_list_each(list, deletefunc);
+    dl_list_clear(list);
+}
+
 static void iup_xb_parse_entity_reset(iup_xb_parse_entity_t *entity) {
     if (entity != NULL ) {
         iup_xb_parse_entity_t *to_reset = entity;
 
-        //delete params
-        dl_list_each(to_reset->params, iup_xb_delete_params);
-        dl_list_clear(to_reset->params);
-        //delete attr
-        dl_list_each(to_reset->attrs, iup_xb_delete_attr);
-        dl_list_clear(to_reset->attrs);
-        //delete attrs
-        dl_list_each(to_reset->attrs_s, iup_xb_delete_attr);
-        dl_list_clear(to_reset->attrs_s);
-        //delete callbacks
-        dl_list_each(to_reset->callbacks, iup_xb_delete_attr);
-        dl_list_clear(to_reset->callbacks);
-        //delete userdata 
-        dl_list_each(to_reset->userdata, iup_xb_delete_attr);
-        dl_list_clear(to_reset->userdata);
-        //delete children
-        dl_list_each(to_reset->children, iup_xb_delete_handle);
-        dl_list_clear(to_reset->children);
+        __iup_xb_clear_list(to_reset->params, iup_xb_delete_params);
+        __iup_xb_clear_list(to_reset->attrs, iup_xb_delete_attr);
+        __iup_xb_clear_list(to_reset->attrs_s, iup_xb_delete_attr);
+        __iup_xb_clear_list(to_reset->callbacks, iup_xb_delete_attr);
+        __iup_xb_clear_list(to_reset->userdata, iup_xb_delete_attr);
+        __iup_xb_clear_list(to_reset->children, iup_xb_delete_handle);
 
     }
 }
