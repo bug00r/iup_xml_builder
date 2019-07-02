@@ -560,7 +560,7 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
 
             } else if(is_attribute(curChild->name)) {
 
-                  __iup_xb_set_attr_to_list(parent_entity->attrs, curChild, __iup_xb_attr_get);
+                __iup_xb_set_attr_to_list(parent_entity->attrs, curChild, __iup_xb_attr_get);
                 
             } else if(is_attributes(curChild->name)) {
 
@@ -602,8 +602,6 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
 
         DEBUG_LOG("CONFIG_HANDLE\n");
 
-        //__iup_xb_config_handle(handle, parent_entity);
-
         iup_xb_parse_entity_free(&cur_entity);
     }
     return handle;
@@ -639,27 +637,25 @@ void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char * buffer, 
     dl_list_append(builder->xml_res, newsrc);
 }
 
-void iup_xml_builder_add_callback(iup_xml_builder_t *builder, const char* clbk_name, Icallback callback) {
-    if (builder != NULL && clbk_name != NULL && callback != NULL) {
-        IupSetAttribute(builder->callbacks, clbk_name, (void*)callback);
+static void __iup_xb_set_handle_attr(Ihandle *handle, const char *attr_name, void *value) {
+    if (handle != NULL && attr_name != NULL) {
+        IupSetAttribute(handle, attr_name, value);
     }
+}
+
+void iup_xml_builder_add_callback(iup_xml_builder_t *builder, const char* clbk_name, Icallback callback) {
+    __iup_xb_set_handle_attr(builder->callbacks, clbk_name, (void*)callback);
 }
 
 void iup_xml_builder_rem_callback(iup_xml_builder_t *builder, const char* clbk_name) {
-    if (builder != NULL && clbk_name != NULL ) {
-        IupSetAttribute(builder->callbacks, clbk_name, NULL);
-    }
+    __iup_xb_set_handle_attr(builder->callbacks, clbk_name, NULL);
 }
 void iup_xml_builder_add_user_data(iup_xml_builder_t *builder, const char* data_name, void *data) {
-    if (builder != NULL && data_name != NULL ) {
-        IupSetAttribute(builder->userdata, data_name, data);
-    }
+    __iup_xb_set_handle_attr(builder->userdata, data_name, data);
 }
 
 void iup_xml_builder_rem_user_data(iup_xml_builder_t *builder, const char* data_name) {
-    if (builder != NULL && data_name != NULL ) {
-        IupSetAttribute(builder->userdata, data_name, NULL);
-    }
+    __iup_xb_set_handle_attr(builder->userdata, data_name, NULL);
 }
 
 
