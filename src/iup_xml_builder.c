@@ -260,7 +260,7 @@ static void __iup_xb_config_handle(iup_xml_builder_t *builder, Ihandle * _handle
 
                     DEBUG_LOG_ARGS("handle with name %s = %p\n", handle->name, handle->handle);
 
-                    IupSetStrAttribute(builder->handles, handle->name, (void*)handle->handle);
+                    IupSetAttribute(builder->handles, handle->name, (void*)handle->handle);
                 }
             }
 
@@ -359,7 +359,7 @@ static Ihandle* __iup_xb_handle_from_node(iup_xml_builder_t *builder, xmlNodePtr
                     
                     params[cnt++] = (void*)handle_param->handle;
 
-                    DEBUG_LOG_ARGS("param %i = %p\n", cnt, handle_param->handle);
+                    DEBUG_LOG_ARGS("param handle %i = %p\n", cnt, handle_param->handle);
 
                     if (handle_param->name != NULL) {
                         
@@ -401,9 +401,21 @@ static Ihandle* __iup_xb_handle_from_node(iup_xml_builder_t *builder, xmlNodePtr
 
                 DEBUG_LOG_ARGS("set named handle: %s\n", curhandle->name);
 
-                IupSetStrAttribute(builder->handles, curhandle->name, (void*)curhandle->handle);
+                IupSetAttribute(builder->handles, curhandle->name, (void*)curhandle->handle);
             
             }
+
+        }
+        
+        xmlChar *param_name = xmlGetProp(node, (xmlChar*)"name");
+
+        if (param_name) {
+
+            DEBUG_LOG_ARGS("set named handle: %s\n", param_name);
+
+            IupSetAttribute(builder->handles, param_name, (void*)result);
+
+            xmlFree(param_name);
         }
 
         free(handle_w_name);
@@ -657,9 +669,11 @@ iup_xml_builder_t* iup_xml_builder_new() {
     if (newbuilder) {
         newbuilder->err = dl_list_new();
         newbuilder->xml_res = dl_list_new();
-        newbuilder->handles = IupUser();
+        newbuilder->parsed = IupUser();
+        newbuilder->handles = NULL;//IupUser();
         newbuilder->callbacks = IupUser();
         newbuilder->userdata = IupUser();
+        newbuilder->cntparsed = 0;
     }
 
     return newbuilder;
@@ -694,6 +708,38 @@ void iup_xml_builder_rem_user_data(iup_xml_builder_t *builder, const char* data_
     __iup_xb_set_handle_attr(builder->userdata, data_name, NULL);
 }
 
+static Ihandle * __iup_xb_parse_xml_res(iup_xml_builder_t *builder, iup_xml_resource_t* res) {
+        
+    xmlDocPtr curxml = res->doc;
+
+    Ihandle *result = NULL;
+
+    if ( curxml ) {
+            
+        builder->handles = IupUser();
+
+        iup_xb_parse_entity_t *cur_entity = iup_xb_parse_entity_new(); 
+
+        Ihandle *result_handle = __iup_xb_parse_node(builder, cur_entity, xmlDocGetRootElement(curxml));
+
+        __iup_xb_config_handle(builder, result_handle, cur_entity);
+
+        if (result_handle) {
+            
+            result = IupUser();
+
+            IupSetAttribute(result, "res", (void*)res);
+            IupSetAttribute(result, "handle", (void*)result_handle);
+            IupSetAttribute(result, "handles",(void*)builder->handles);
+
+        }
+        
+        iup_xb_parse_entity_free(&cur_entity);
+	}
+
+    return result;
+}
+
 void iup_xml_builder_parse(iup_xml_builder_t *builder) {
 
     if (builder == NULL) return;
@@ -704,30 +750,75 @@ void iup_xml_builder_parse(iup_xml_builder_t *builder) {
 
         iup_xml_resource_t* newres = (iup_xml_resource_t*)cur_node->data;
         
-        xmlDocPtr curxml = newres->doc;
-		
-        if ( curxml ) {
-            
-            iup_xb_parse_entity_t *cur_entity = iup_xb_parse_entity_new(); 
+        Ihandle * result_handle = __iup_xb_parse_xml_res(builder, newres);
 
-            Ihandle *result = __iup_xb_parse_node(builder, cur_entity, xmlDocGetRootElement(curxml));
+        if (result_handle) {
 
-            __iup_xb_config_handle(builder, result, cur_entity);
+            IupSetAttribute(builder->parsed, newres->name, (void*)result_handle);
 
-            IupSetAttribute(builder->handles, newres->name, (void*)result);
+            ++builder->cntparsed;
+        }
 
-            iup_xb_parse_entity_free(&cur_entity);
-		}
 		cur_node = cur_node->next;
 	}
 
 }
 
-Ihandle* iup_xml_builder_get_handle(iup_xml_builder_t *builder, const char *name) {
+Ihandle* iup_xml_builder_get_result(iup_xml_builder_t *builder, const char *name) {
+
+    return  (Ihandle*)IupGetAttribute(builder->parsed, name);
+
+}
+
+Ihandle* iup_xml_builder_get_result_new(iup_xml_builder_t *builder, const char *name) {
     Ihandle *result = NULL;
+
     if (builder != NULL  && __iup_cb_string_is_not_blank(name)) {
-        result = (Ihandle*)IupGetAttribute(builder->handles, name);
+
+        Ihandle *entity = (Ihandle*)IupGetAttribute(builder->parsed, name);
+
+        iup_xml_resource_t* res = (iup_xml_resource_t*)IupGetAttribute(entity, "res");
+
+        result = __iup_xb_parse_xml_res(builder, res);
     }
+
+    return result;
+}
+
+void iup_xml_builder_free_result(Ihandle **result) {
+    if (result != NULL && *result != NULL) {
+        Ihandle *to_delete = *result;
+        IupDestroy((Ihandle*)IupGetAttribute(to_delete, "handles"));
+        IupDestroy(to_delete);
+        *result = NULL;
+    }
+}
+
+Ihandle* iup_xml_builder_get_main(Ihandle *result_handle) {
+    
+    Ihandle *result = NULL;
+    
+    if (result_handle != NULL) {
+
+        result = (Ihandle*)IupGetAttribute(result_handle, "handle");
+    }
+
+    return result;
+
+}
+
+Ihandle* iup_xml_builder_get_name(Ihandle *result_handle, const char *name) {
+
+    Ihandle *result = NULL;
+
+    if (result_handle != NULL  && __iup_cb_string_is_not_blank(name)) {
+
+        Ihandle* handles = (Ihandle*)IupGetAttribute(result_handle, "handles");
+
+        result = (Ihandle*)IupGetAttribute(handles, name);
+
+    }
+
     return result;
 }
 
@@ -738,9 +829,26 @@ void iup_xml_builder_free(iup_xml_builder_t **builder) {
         __iup_xml_builder_xml_res_free(to_delete);
         __iup_xml_builder_err_free(to_delete);
 
-        IupDestroy(to_delete->handles);
         IupDestroy(to_delete->callbacks);
         IupDestroy(to_delete->userdata);
+
+        char **names = malloc( to_delete->cntparsed * sizeof(char *) );
+
+        int cntnames = IupGetAllAttributes(to_delete->parsed, names, to_delete->cntparsed);
+
+        DEBUG_LOG_ARGS("copied attributes %i\n", cntnames);
+
+        for (int handle = 0; handle < cntnames; ++handle) {
+            
+            DEBUG_LOG_ARGS("rem attribute %s\n", names[handle]);
+            
+            Ihandle *entity = (Ihandle*)IupGetAttribute(to_delete->parsed, names[handle] );
+            
+            iup_xml_builder_free_result(&entity);
+        }
+
+        free(names);
+        IupDestroy(to_delete->parsed);
 
         free(to_delete);
         *builder = NULL;

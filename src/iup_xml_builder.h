@@ -32,6 +32,8 @@
 typedef struct {
     dl_list_t *xml_res;
     dl_list_t *err;
+	uint32_t cntparsed;
+	Ihandle * parsed;
 	Ihandle * handles;
 	Ihandle * callbacks;
 	Ihandle * userdata;
@@ -51,7 +53,13 @@ void iup_xml_builder_rem_user_data(iup_xml_builder_t *builder, const char* data_
 
 void iup_xml_builder_parse(iup_xml_builder_t *builder);
 
-Ihandle* iup_xml_builder_get_handle(iup_xml_builder_t *builder, const char *name);
+Ihandle* iup_xml_builder_get_result(iup_xml_builder_t *builder, const char *name);
+Ihandle* iup_xml_builder_get_result_new(iup_xml_builder_t *builder, const char *name);
+
+void iup_xml_builder_free_result(Ihandle **result);
+
+Ihandle* iup_xml_builder_get_main(Ihandle *result_handle);
+Ihandle* iup_xml_builder_get_name(Ihandle *result_handle, const char *name);
 
 void iup_xml_builder_perr(iup_xml_builder_t *builder);
 

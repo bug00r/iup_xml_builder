@@ -43,11 +43,25 @@ static void test_xml_builder_parse_file() {
 
     iup_xml_builder_parse(builder);
 
-    Ihandle *handle = iup_xml_builder_get_handle(builder, "testdialog");
+    Ihandle *result = iup_xml_builder_get_result(builder, "testdialog");
+
+    result = iup_xml_builder_get_result_new(builder, "testdialog2");
+
+    Ihandle *handle = iup_xml_builder_get_main(result);
 
     IupShowXY(handle, IUP_CENTER, IUP_CENTER);
 
+    Ihandle *list = iup_xml_builder_get_name(result, "mylist");
+
+    assert(list != NULL);
+
+    IupSetAttribute(list, "APPENDITEM", "Added from outside");
+
     assert(handle != NULL);
+
+    iup_xml_builder_free_result(&result);
+
+    assert(result == NULL);
 
     iup_xml_builder_free(&builder);
 
