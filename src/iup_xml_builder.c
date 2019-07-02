@@ -46,12 +46,12 @@ static iup_xb_parse_entity_t *iup_xb_parse_entity_new() {
     return newentity;
 }
 
-static iup_xb_attr_t *iup_xb_parse_attr_new() {
+static iup_xb_attr_t *iup_xb_parse_attr_new(xmlChar *name, xmlChar* value) {
     iup_xb_attr_t* newattr = malloc(sizeof(iup_xb_attr_t));
 
     if(newattr) {
-        newattr->name = NULL;
-        newattr->value = NULL;
+        newattr->name = name;
+        newattr->value = value;
     }
 
     return newattr;
@@ -442,24 +442,26 @@ static iup_xb_params_t* __iup_xb_handle_param_get(iup_xml_builder_t *builder, xm
     return result;
 }
 
+static xmlChar* __iup_xb_examin_value(xmlNodePtr node) {
+    xmlChar *result = xmlGetProp(node, (xmlChar *)"value");
+
+    if ( is_value_content((const char*)result))  {
+        xmlFree(result);
+        result = xmlNodeGetContent(node);
+    } 
+
+    return result;
+}
+
 static iup_xb_attr_t* __iup_xb_attr_get(xmlNodePtr node) {
     iup_xb_attr_t *result = NULL;
 
     xmlChar *name = xmlGetProp(node, (xmlChar *)"name");
-    xmlChar *value = xmlGetProp(node, (xmlChar *)"value");
+    xmlChar *value = __iup_xb_examin_value(node);
 
     if (name != NULL && value != NULL) {
-        
-        if ( is_value_content((const char*)value))  {
-            xmlFree(value);
-            value = xmlNodeGetContent(node);
-        } 
 
-        if (value != NULL) {
-            result = iup_xb_parse_attr_new();
-            result->name = name;
-            result->value = value;
-        }
+         result = iup_xb_parse_attr_new(name, value);
 
     } else {
         xmlFree(name);
@@ -472,19 +474,11 @@ static iup_xb_attr_t* __iup_xb_attr_get(xmlNodePtr node) {
 static iup_xb_attr_t* __iup_xb_attrs_get(xmlNodePtr node) {
     iup_xb_attr_t *result = NULL;
 
-    xmlChar *value = xmlGetProp(node, (xmlChar *)"value");
+    xmlChar *value = __iup_xb_examin_value(node);
 
     if (value != NULL) {
         
-        if ( is_value_content((const char*)value))  {
-            xmlFree(value);
-            value = xmlNodeGetContent(node);
-        } 
-
-        if (value != NULL) {
-            result = iup_xb_parse_attr_new();
-            result->value = value;
-        }
+        result = iup_xb_parse_attr_new(NULL, value);
 
     }
 
@@ -502,9 +496,9 @@ static iup_xb_attr_t* __iup_xb_callback_get(xmlNodePtr node) {
         xmlChar *value = xmlGetProp(node, (xmlChar *)"event");
 
         if (value != NULL) {
-            result = iup_xb_parse_attr_new();
-            result->name = name;
-            result->value = value;
+            result = iup_xb_parse_attr_new(name, value);
+        } else {
+            xmlFree(name);
         }
     }
 
@@ -535,7 +529,6 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
                 continue;
             } 
 
-            //if(is_params(node->name)) {
             if (is_params(curChild)) {
                 
                 DEBUG_LOG("param found:\n");
