@@ -511,6 +511,14 @@ static iup_xb_attr_t* __iup_xb_callback_get(xmlNodePtr node) {
     return result;
 }
 
+static void __iup_xb_set_attr_to_list(dl_list_t *list, xmlNodePtr node, iup_xb_attr_t* (*attr_func)(xmlNodePtr)) {
+    iup_xb_attr_t *data = attr_func(node);
+                
+    if (data) {
+        dl_list_append(list, data);
+    }
+}
+
 static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_entity_t *parent_entity, xmlNodePtr node) {
     Ihandle *handle = NULL;
     if (node && node->type == XML_ELEMENT_NODE) {
@@ -558,33 +566,21 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
                 }
 
             } else if(is_attribute(curChild->name)) {
-                //is attribute
-                iup_xb_attr_t *attr = __iup_xb_attr_get(curChild);
-                if (attr) {
-                    dl_list_append(parent_entity->attrs, attr);
-                }
+
+                  __iup_xb_set_attr_to_list(parent_entity->attrs, curChild, __iup_xb_attr_get);
                 
             } else if(is_attributes(curChild->name)) {
-                //is attribute
-                iup_xb_attr_t *attrs = __iup_xb_attrs_get(curChild);
-                if (attrs) {
-                    dl_list_append(parent_entity->attrs_s, attrs);
-                }
-                
+
+                __iup_xb_set_attr_to_list(parent_entity->attrs_s, curChild, __iup_xb_attrs_get);
+
             } else if (is_callback(curChild->name)) {
-                iup_xb_attr_t *callback = __iup_xb_callback_get(curChild);
-                
-                if (callback) {
-                    dl_list_append(parent_entity->callbacks, callback);
-                }
-                
+             
+                __iup_xb_set_attr_to_list(parent_entity->callbacks, curChild, __iup_xb_callback_get); 
+            
             } else if (is_userdata(curChild->name)) {
-                iup_xb_attr_t *userdat = __iup_xb_attr_get(curChild);
-                
-                if (userdat) {
-                    dl_list_append(parent_entity->userdata, userdat);
-                }
-                
+            
+                __iup_xb_set_attr_to_list(parent_entity->userdata, curChild, __iup_xb_attr_get);
+            
             } else {
                 //is children
                 Ihandle * child_handle = __iup_xb_parse_node(builder, cur_entity, curChild);
