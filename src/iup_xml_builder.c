@@ -244,88 +244,98 @@ static bool is_value_content(const char *value) {
     return (value != NULL && (strcmp(value, ":c") == 0));
 }
 
+static void __iup_xb_config_handles(void **data, void *params) {
+
+    Ihandle **handles = (Ihandle **)params;
+
+    iup_xb_handle_t * handle = (iup_xb_handle_t *)*data;
+    
+    if (handle) {
+
+        IupAppend(handles[0], handle->handle);
+
+        if(handle->name != NULL) {
+
+            DEBUG_LOG_ARGS("handle with name %s = %p\n", handle->name, handle->handle);
+
+            IupSetAttribute(handles[1], handle->name, (void*)handle->handle);
+        }
+    }
+
+}
+
+static void __iup_xb_config_attr(void **data, void *params) {
+
+    iup_xb_attr_t * attr = (iup_xb_attr_t *)*data;
+
+    if (attr) {
+        DEBUG_LOG_ARGS("set attr %s = %s\n", attr->name, attr->value);
+
+        IupSetStrAttribute((Ihandle*)params, attr->name, attr->value);
+
+    }
+
+}
+
+static void __iup_xb_config_attr_s(void **data, void *params) {
+
+    iup_xb_attr_t * attrs = (iup_xb_attr_t *)*data;
+
+    if (attrs) {
+        DEBUG_LOG_ARGS("set attrs %s\n", attrs->value);
+
+        IupSetAttributes((Ihandle*)params, attrs->value);
+    }
+
+}
+
+
+static void __iup_xb_config_callbacks(void **data, void *params) {
+
+    iup_xb_attr_t * callback = (iup_xb_attr_t *)*data;
+    
+    Ihandle **handles = (Ihandle **)params;
+
+    if (callback) {
+        DEBUG_LOG_ARGS("set callback %s = %s\n", callback->name, callback->value);
+
+        IupSetCallback(handles[0], callback->value, (Icallback)IupGetAttribute(handles[1], callback->name));
+
+    }
+
+}
+
+static void __iup_xb_config_userdata(void **data, void *params) {
+
+    iup_xb_attr_t * userdat = (iup_xb_attr_t *)*data;
+    
+    Ihandle **handles = (Ihandle **)params;
+
+    if (userdat) {
+        DEBUG_LOG_ARGS("set callback %s = %s\n", userdat->name, userdat->value);
+
+        IupSetStrAttribute(handles[0], userdat->name, IupGetAttribute(handles[1], userdat->value));
+
+    }
+
+}
+
 static void __iup_xb_config_handle(iup_xml_builder_t *builder, Ihandle * _handle, iup_xb_parse_entity_t *conf_entity) {
     
     if(_handle != NULL && conf_entity != NULL) {
+        
+        Ihandle *params[2] = {_handle, builder->handles};
+        dl_list_each_data(conf_entity->children, (void*)params, __iup_xb_config_handles);
 
-        dl_list_item_t* cur_node = conf_entity->children->first;
+        dl_list_each_data(conf_entity->attrs, (void*)_handle, __iup_xb_config_attr);
+ 
+        dl_list_each_data(conf_entity->attrs_s, (void*)_handle, __iup_xb_config_attr_s);
 
-        while(cur_node != NULL) {
-            iup_xb_handle_t * handle = (iup_xb_handle_t *)cur_node->data;
-            
-            if (handle) {
-                IupAppend(_handle, handle->handle);
+        params[1] = builder->callbacks;
+        dl_list_each_data(conf_entity->callbacks, (void*)params, __iup_xb_config_callbacks);
 
-                if(handle->name != NULL) {
-
-                    DEBUG_LOG_ARGS("handle with name %s = %p\n", handle->name, handle->handle);
-
-                    IupSetAttribute(builder->handles, handle->name, (void*)handle->handle);
-                }
-            }
-
-            cur_node = cur_node->next;
-        }
-
-        cur_node = conf_entity->attrs->first;
-
-        while(cur_node != NULL) {
-            
-            iup_xb_attr_t * attr = (iup_xb_attr_t *)cur_node->data;
-
-            if (attr) {
-                DEBUG_LOG_ARGS("set attr %s = %s\n", attr->name, attr->value);
-
-                IupSetStrAttribute(_handle, attr->name, attr->value);
-            }
-
-            cur_node = cur_node->next;
-        }
-
-        cur_node = conf_entity->attrs_s->first;
-
-        while(cur_node != NULL) {
-            
-            iup_xb_attr_t * attrs = (iup_xb_attr_t *)cur_node->data;
-
-            if (attrs) {
-                DEBUG_LOG_ARGS("set attrs %s\n", attrs->value);
-
-                IupSetAttributes(_handle, attrs->value);
-            }
-
-            cur_node = cur_node->next;
-        }
-
-        cur_node = conf_entity->callbacks->first;
-
-        while(cur_node != NULL) {
-            
-            iup_xb_attr_t * callback = (iup_xb_attr_t *)cur_node->data;
-            
-            if (callback) {
-                DEBUG_LOG_ARGS("set callback %s = %s\n", callback->name, callback->value);
-
-                IupSetCallback(_handle, callback->value, (Icallback)IupGetAttribute(builder->callbacks, callback->name));
-
-            }
-            cur_node = cur_node->next;
-        }
-
-        cur_node = conf_entity->userdata->first;
-
-        while(cur_node != NULL) {
-            
-            iup_xb_attr_t * userdat = (iup_xb_attr_t *)cur_node->data;
-            
-            if (userdat) {
-                DEBUG_LOG_ARGS("set callback %s = %s\n", userdat->name, userdat->value);
-
-                IupSetStrAttribute(_handle, userdat->name, IupGetAttribute(builder->userdata, userdat->value));
-
-            }
-            cur_node = cur_node->next;
-        }
+        params[1] = builder->userdata;
+        dl_list_each_data(conf_entity->userdata, (void*)params, __iup_xb_config_userdata);
 
     }
 }
