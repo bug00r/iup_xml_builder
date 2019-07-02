@@ -35,12 +35,15 @@ static void test_xml_builder_parse_file() {
 
     assert(builder != NULL);
 
-    iup_xml_builder_add_file(builder, "dialog.xml");
+    iup_xml_builder_add_file(builder, "testdialog", "dialog.xml");
+    iup_xml_builder_add_file(builder, "testdialog2", "dialog.xml");
 
     iup_xml_builder_add_callback(builder, "testcallback", (Icallback)test_callback_btn);
     iup_xml_builder_add_user_data(builder, "testdata", (void*)"Das hier ist ein userdata text :)");
 
-    Ihandle *handle = iup_xml_builder_parse(builder);
+    iup_xml_builder_parse(builder);
+
+    Ihandle *handle = iup_xml_builder_get_handle(builder, "testdialog");
 
     IupShowXY(handle, IUP_CENTER, IUP_CENTER);
 

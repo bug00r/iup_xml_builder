@@ -40,8 +40,8 @@ typedef struct {
 iup_xml_builder_t* iup_xml_builder_new();
 void iup_xml_builder_free(iup_xml_builder_t **builder);
 
-void iup_xml_builder_add_file(iup_xml_builder_t *builder, const char* filename);
-void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char * buffer, int size);
+void iup_xml_builder_add_file(iup_xml_builder_t *builder, const char *name, const char* filename);
+void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char *name, const char * buffer, int size);
 
 void iup_xml_builder_add_callback(iup_xml_builder_t *builder, const char* clbk_name, Icallback callback);
 void iup_xml_builder_rem_callback(iup_xml_builder_t *builder, const char* clbk_name);
@@ -49,7 +49,9 @@ void iup_xml_builder_rem_callback(iup_xml_builder_t *builder, const char* clbk_n
 void iup_xml_builder_add_user_data(iup_xml_builder_t *builder, const char* data_name, void *data);
 void iup_xml_builder_rem_user_data(iup_xml_builder_t *builder, const char* data_name);
 
-Ihandle *iup_xml_builder_parse(iup_xml_builder_t *builder);
+void iup_xml_builder_parse(iup_xml_builder_t *builder);
+
+Ihandle* iup_xml_builder_get_handle(iup_xml_builder_t *builder, const char *name);
 
 void iup_xml_builder_perr(iup_xml_builder_t *builder);
 

@@ -31,6 +31,45 @@ typedef struct {
     };
 } iup_xb_params_t;
 
+typedef struct {
+	char *name;
+	xmlDocPtr doc;
+} iup_xml_resource_t;
+
+static char * __iup_xb_copy_string(const char * string) {
+	size_t size = strlen(string) + 1;
+	char * copy = malloc(size*sizeof(char));
+	memcpy(copy, string, size);
+	return copy;
+}
+
+static bool __iup_cb_string_is_not_blank(const char * string) {
+    return (string != NULL && (strlen(string) > 0));
+}
+
+static iup_xml_resource_t* __iup_xb_xml_res_new(const char *name, xmlDocPtr doc) {
+    iup_xml_resource_t* newres = malloc(sizeof(iup_xml_resource_t));
+
+    if (newres != NULL) {
+        newres->name = __iup_xb_copy_string(name);
+        newres->doc = doc;
+    }
+
+    return newres;
+}
+
+static void __iup_xb_xml_res_free(iup_xml_resource_t**res) {
+    if (res != NULL && *res != NULL) {
+        iup_xml_resource_t *to_delete = *res;
+
+        free(to_delete->name);
+        xmlFreeDoc(to_delete->doc);
+
+        free(to_delete);
+        *res = NULL;
+    }
+}
+
 static iup_xb_parse_entity_t *iup_xb_parse_entity_new() {
     iup_xb_parse_entity_t *newentity = malloc(sizeof(iup_xb_parse_entity_t));
 
@@ -160,7 +199,7 @@ static void __iup_xml_builder_xml_res_free(iup_xml_builder_t *builder) {
 
 	while(cur_node != NULL)   {
 		if ( cur_node->data != NULL ) {
-			xmlFreeDoc((xmlDocPtr)cur_node->data);
+			__iup_xb_xml_res_free((iup_xml_resource_t **)&cur_node->data);
 		}
 		cur_node = cur_node->next;
 	}
@@ -626,14 +665,18 @@ iup_xml_builder_t* iup_xml_builder_new() {
     return newbuilder;
 }
 
-void iup_xml_builder_add_file(iup_xml_builder_t *builder, const char* filename) {
-    xmlDocPtr newsrc = xmlReadFile(filename, "UTF-8", 0);
-    dl_list_append(builder->xml_res, newsrc);
+void iup_xml_builder_add_file(iup_xml_builder_t *builder, const char *name, const char* filename) {
+    if (builder != NULL  && __iup_cb_string_is_not_blank(name)) {
+        xmlDocPtr newsrc = xmlReadFile(filename, "UTF-8", 0);
+        dl_list_append(builder->xml_res, __iup_xb_xml_res_new(name, newsrc));
+    }
 }
 
-void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char * buffer, int size) {
-    xmlDocPtr newsrc = xmlReadMemory(buffer, size, "default", "UTF-8", 0);
-    dl_list_append(builder->xml_res, newsrc);
+void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char *name, const char * buffer, int size) {
+    if (builder != NULL  && __iup_cb_string_is_not_blank(name)) {
+        xmlDocPtr newsrc = xmlReadMemory(buffer, size, "default", "UTF-8", 0);
+        dl_list_append(builder->xml_res, __iup_xb_xml_res_new(name, newsrc));
+    }
 }
 
 void iup_xml_builder_add_callback(iup_xml_builder_t *builder, const char* clbk_name, Icallback callback) {
@@ -651,31 +694,41 @@ void iup_xml_builder_rem_user_data(iup_xml_builder_t *builder, const char* data_
     __iup_xb_set_handle_attr(builder->userdata, data_name, NULL);
 }
 
-Ihandle *iup_xml_builder_parse(iup_xml_builder_t *builder) {
+void iup_xml_builder_parse(iup_xml_builder_t *builder) {
+
+    if (builder == NULL) return;
 
     dl_list_item_t* cur_node = builder->xml_res->first;
-
-    Ihandle *result = NULL;
 	
     while(cur_node != NULL) {
 
-        xmlDocPtr curxml = (xmlDocPtr)cur_node->data;
+        iup_xml_resource_t* newres = (iup_xml_resource_t*)cur_node->data;
+        
+        xmlDocPtr curxml = newres->doc;
 		
         if ( curxml ) {
             
             iup_xb_parse_entity_t *cur_entity = iup_xb_parse_entity_new(); 
 
-            result = __iup_xb_parse_node(builder, cur_entity, xmlDocGetRootElement(curxml));
+            Ihandle *result = __iup_xb_parse_node(builder, cur_entity, xmlDocGetRootElement(curxml));
 
             __iup_xb_config_handle(builder, result, cur_entity);
+
+            IupSetAttribute(builder->handles, newres->name, (void*)result);
 
             iup_xb_parse_entity_free(&cur_entity);
 		}
 		cur_node = cur_node->next;
 	}
 
-    return result;
+}
 
+Ihandle* iup_xml_builder_get_handle(iup_xml_builder_t *builder, const char *name) {
+    Ihandle *result = NULL;
+    if (builder != NULL  && __iup_cb_string_is_not_blank(name)) {
+        result = (Ihandle*)IupGetAttribute(builder->handles, name);
+    }
+    return result;
 }
 
 void iup_xml_builder_free(iup_xml_builder_t **builder) {
