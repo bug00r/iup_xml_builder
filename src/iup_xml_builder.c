@@ -607,6 +607,12 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
     return handle;
 }
 
+static void __iup_xb_set_handle_attr(Ihandle *handle, const char *attr_name, void *value) {
+    if (handle != NULL && attr_name != NULL) {
+        IupSetAttribute(handle, attr_name, value);
+    }
+}
+
 #if 0
 //###################################################################################
 //EOF private section
@@ -637,12 +643,6 @@ void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char * buffer, 
     dl_list_append(builder->xml_res, newsrc);
 }
 
-static void __iup_xb_set_handle_attr(Ihandle *handle, const char *attr_name, void *value) {
-    if (handle != NULL && attr_name != NULL) {
-        IupSetAttribute(handle, attr_name, value);
-    }
-}
-
 void iup_xml_builder_add_callback(iup_xml_builder_t *builder, const char* clbk_name, Icallback callback) {
     __iup_xb_set_handle_attr(builder->callbacks, clbk_name, (void*)callback);
 }
@@ -657,7 +657,6 @@ void iup_xml_builder_add_user_data(iup_xml_builder_t *builder, const char* data_
 void iup_xml_builder_rem_user_data(iup_xml_builder_t *builder, const char* data_name) {
     __iup_xb_set_handle_attr(builder->userdata, data_name, NULL);
 }
-
 
 Ihandle *iup_xml_builder_parse(iup_xml_builder_t *builder) {
 
