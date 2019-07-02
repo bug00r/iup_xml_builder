@@ -21,7 +21,9 @@ static void test_xml_builder_alloc_free() {
 
 int test_callback_btn(Ihandle* ih) {
 
-    IupMessage("button event message", "triggered from predefined Callback :)");
+    const char * value = (const char *)IupGetAttribute(ih, "hero");
+
+    IupMessage("button event message", value);
 
     return IUP_DEFAULT;
 }
@@ -36,6 +38,7 @@ static void test_xml_builder_parse_file() {
     iup_xml_builder_add_file(builder, "dialog.xml");
 
     iup_xml_builder_add_callback(builder, "testcallback", (Icallback)test_callback_btn);
+    iup_xml_builder_add_user_data(builder, "testdata", (void*)"Das hier ist ein userdata text :)");
 
     Ihandle *handle = iup_xml_builder_parse(builder);
 

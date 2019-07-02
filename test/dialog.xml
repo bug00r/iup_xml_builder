@@ -1,6 +1,6 @@
 <dialog>
     <!--<params>-->
-        <vbox param="-">
+        <hbox param="-">
             <invalid>
                 <string param="-" value=":c" >Langes Label:</string>
                 <string value=":c" >Langes Label:</string>
@@ -11,12 +11,19 @@
                 <callback event="ACTION" name="notexisttestcallback" />
             </invalid>
             <button>
-                <attr name="TITLE" value="ein button" />
                 <callback event="ACTION" name="testcallback" />
+                <user-data name="hero" value="testdata" />
+                <attrs value='TITLE="ein button",RASTERSIZE=125,FGCOLOR=#662211' />
+            </button>
+            <button>
+                <callback event="ACTION" name="testcallback" />
+                <user-data name="hero" value="testdata" />
+                <attrs value=":c" >TITLE="Ein anderer Button", RASTERSIZE=125, FGCOLOR=#FF2266</attrs>
             </button>
             <flatbutton>
                 <attr name="TITLE" value="ein button" />
                 <callback event="FLAT_ACTION" name="testcallback" />
+                <user-data name="hero" value="testdata" />
             </flatbutton>
             <label>
                 <!-- value=":c" means text content of node <attr>textcontent</attr> -->
@@ -40,7 +47,7 @@
                 <attr name="VALUE" value="Some text isn't it?" />
                 <attr name="RASTERSIZE" value="125" />
             </text>
-        </vbox>
+        </hbox>
     <!--</params>-->
     <attr name="TITLE" value="generic iup Dialog" />
     <attr name="SIZE" value="HALFxHALF" />

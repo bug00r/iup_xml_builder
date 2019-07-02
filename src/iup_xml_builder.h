@@ -34,6 +34,7 @@ typedef struct {
     dl_list_t *err;
 	Ihandle * handles;
 	Ihandle * callbacks;
+	Ihandle * userdata;
 } iup_xml_builder_t;
 
 iup_xml_builder_t* iup_xml_builder_new();
@@ -44,6 +45,9 @@ void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char * buffer, 
 
 void iup_xml_builder_add_callback(iup_xml_builder_t *builder, const char* clbk_name, Icallback callback);
 void iup_xml_builder_rem_callback(iup_xml_builder_t *builder, const char* clbk_name);
+
+void iup_xml_builder_add_user_data(iup_xml_builder_t *builder, const char* data_name, void *data);
+void iup_xml_builder_rem_user_data(iup_xml_builder_t *builder, const char* data_name);
 
 Ihandle *iup_xml_builder_parse(iup_xml_builder_t *builder);
 

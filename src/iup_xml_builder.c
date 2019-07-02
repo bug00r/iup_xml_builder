@@ -3,8 +3,10 @@
 typedef struct {
     dl_list_t *params;
     dl_list_t *attrs;
+    dl_list_t *attrs_s;
     dl_list_t *children;
     dl_list_t *callbacks;
+    dl_list_t *userdata;
 } iup_xb_parse_entity_t;
 
 typedef struct {
@@ -35,8 +37,10 @@ static iup_xb_parse_entity_t *iup_xb_parse_entity_new() {
     if(newentity) {
         newentity->params = dl_list_new();
         newentity->attrs = dl_list_new();
+        newentity->attrs_s = dl_list_new();
         newentity->children = dl_list_new();
         newentity->callbacks = dl_list_new();
+        newentity->userdata = dl_list_new();
     }
 
     return newentity;
@@ -123,9 +127,15 @@ static void iup_xb_parse_entity_reset(iup_xb_parse_entity_t *entity) {
         //delete attr
         dl_list_each(to_reset->attrs, iup_xb_delete_attr);
         dl_list_clear(to_reset->attrs);
+        //delete attrs
+        dl_list_each(to_reset->attrs_s, iup_xb_delete_attr);
+        dl_list_clear(to_reset->attrs_s);
         //delete callbacks
         dl_list_each(to_reset->callbacks, iup_xb_delete_attr);
         dl_list_clear(to_reset->callbacks);
+        //delete userdata 
+        dl_list_each(to_reset->userdata, iup_xb_delete_attr);
+        dl_list_clear(to_reset->userdata);
         //delete children
         dl_list_each(to_reset->children, iup_xb_delete_handle);
         dl_list_clear(to_reset->children);
@@ -140,10 +150,11 @@ static void iup_xb_parse_entity_free(iup_xb_parse_entity_t **entity) {
         iup_xb_parse_entity_reset(to_delete);
 
         dl_list_free(&to_delete->attrs);
+        dl_list_free(&to_delete->attrs_s);
         dl_list_free(&to_delete->params);
         dl_list_free(&to_delete->children);
         dl_list_free(&to_delete->callbacks);
-        
+        dl_list_free(&to_delete->userdata);
         free(to_delete);
         *entity = NULL;
     }
@@ -175,8 +186,16 @@ static bool is_attribute(const char *text) {
     return (strcmp(text, "attr") == 0);
 }
 
+static bool is_attributes(const char *text) {
+    return (strcmp(text, "attrs") == 0);
+}
+
 static bool is_callback(const char *text) {
     return (strcmp(text, "callback") == 0);
+}
+
+static bool is_userdata(const char *text) {
+    return (strcmp(text, "user-data") == 0);
 }
 
 static bool is_params(xmlNodePtr node) {
@@ -231,6 +250,21 @@ static void __iup_xb_config_handle(iup_xml_builder_t *builder, Ihandle * _handle
             cur_node = cur_node->next;
         }
 
+        cur_node = conf_entity->attrs_s->first;
+
+        while(cur_node != NULL) {
+            
+            iup_xb_attr_t * attrs = (iup_xb_attr_t *)cur_node->data;
+
+            if (attrs) {
+                DEBUG_LOG_ARGS("set attrs %s\n", attrs->value);
+
+                IupSetAttributes(_handle, attrs->value);
+            }
+
+            cur_node = cur_node->next;
+        }
+
         cur_node = conf_entity->callbacks->first;
 
         while(cur_node != NULL) {
@@ -241,6 +275,21 @@ static void __iup_xb_config_handle(iup_xml_builder_t *builder, Ihandle * _handle
                 DEBUG_LOG_ARGS("set callback %s = %s\n", callback->name, callback->value);
 
                 IupSetCallback(_handle, callback->value, (Icallback)IupGetAttribute(builder->callbacks, callback->name));
+
+            }
+            cur_node = cur_node->next;
+        }
+
+        cur_node = conf_entity->userdata->first;
+
+        while(cur_node != NULL) {
+            
+            iup_xb_attr_t * userdat = (iup_xb_attr_t *)cur_node->data;
+            
+            if (userdat) {
+                DEBUG_LOG_ARGS("set callback %s = %s\n", userdat->name, userdat->value);
+
+                IupSetStrAttribute(_handle, userdat->name, IupGetAttribute(builder->userdata, userdat->value));
 
             }
             cur_node = cur_node->next;
@@ -420,6 +469,28 @@ static iup_xb_attr_t* __iup_xb_attr_get(xmlNodePtr node) {
     return result;
 }
 
+static iup_xb_attr_t* __iup_xb_attrs_get(xmlNodePtr node) {
+    iup_xb_attr_t *result = NULL;
+
+    xmlChar *value = xmlGetProp(node, (xmlChar *)"value");
+
+    if (value != NULL) {
+        
+        if ( is_value_content((const char*)value))  {
+            xmlFree(value);
+            value = xmlNodeGetContent(node);
+        } 
+
+        if (value != NULL) {
+            result = iup_xb_parse_attr_new();
+            result->value = value;
+        }
+
+    }
+
+    return result;
+}
+
 static iup_xb_attr_t* __iup_xb_callback_get(xmlNodePtr node) {
     
     iup_xb_attr_t *result = NULL;
@@ -493,11 +564,25 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
                     dl_list_append(parent_entity->attrs, attr);
                 }
                 
+            } else if(is_attributes(curChild->name)) {
+                //is attribute
+                iup_xb_attr_t *attrs = __iup_xb_attrs_get(curChild);
+                if (attrs) {
+                    dl_list_append(parent_entity->attrs_s, attrs);
+                }
+                
             } else if (is_callback(curChild->name)) {
                 iup_xb_attr_t *callback = __iup_xb_callback_get(curChild);
                 
                 if (callback) {
                     dl_list_append(parent_entity->callbacks, callback);
+                }
+                
+            } else if (is_userdata(curChild->name)) {
+                iup_xb_attr_t *userdat = __iup_xb_attr_get(curChild);
+                
+                if (userdat) {
+                    dl_list_append(parent_entity->userdata, userdat);
                 }
                 
             } else {
@@ -549,6 +634,7 @@ iup_xml_builder_t* iup_xml_builder_new() {
         newbuilder->xml_res = dl_list_new();
         newbuilder->handles = IupUser();
         newbuilder->callbacks = IupUser();
+        newbuilder->userdata = IupUser();
     }
 
     return newbuilder;
@@ -575,6 +661,18 @@ void iup_xml_builder_rem_callback(iup_xml_builder_t *builder, const char* clbk_n
         IupSetAttribute(builder->callbacks, clbk_name, NULL);
     }
 }
+void iup_xml_builder_add_user_data(iup_xml_builder_t *builder, const char* data_name, void *data) {
+    if (builder != NULL && data_name != NULL ) {
+        IupSetAttribute(builder->userdata, data_name, data);
+    }
+}
+
+void iup_xml_builder_rem_user_data(iup_xml_builder_t *builder, const char* data_name) {
+    if (builder != NULL && data_name != NULL ) {
+        IupSetAttribute(builder->userdata, data_name, NULL);
+    }
+}
+
 
 Ihandle *iup_xml_builder_parse(iup_xml_builder_t *builder) {
 
@@ -612,6 +710,7 @@ void iup_xml_builder_free(iup_xml_builder_t **builder) {
 
         IupDestroy(to_delete->handles);
         IupDestroy(to_delete->callbacks);
+        IupDestroy(to_delete->userdata);
 
         free(to_delete);
         *builder = NULL;
