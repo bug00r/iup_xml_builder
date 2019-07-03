@@ -28,6 +28,17 @@ int test_callback_btn(Ihandle* ih) {
     return IUP_DEFAULT;
 }
 
+int test_callback_linkhandle_btn(Ihandle* ih) {
+
+    Ihandle *mylist = (Ihandle* )IupGetAttribute(ih, "mylist");
+
+    const char * value = (const char*)IupGetAttribute(mylist, "VALUESTRING");
+
+    IupMessage("button event message for list", value);
+
+    return IUP_DEFAULT;
+}
+
 static void test_xml_builder_parse_file() {
     DEBUG_LOG(">>>\n");
 
@@ -36,18 +47,31 @@ static void test_xml_builder_parse_file() {
     assert(builder != NULL);
 
     iup_xml_builder_add_file(builder, "testdialog", "dialog.xml");
-    iup_xml_builder_add_file(builder, "testdialog2", "dialog.xml");
+    iup_xml_builder_add_file(builder, "window", "window.xml");
 
     iup_xml_builder_add_callback(builder, "testcallback", (Icallback)test_callback_btn);
+    iup_xml_builder_add_callback(builder, "testcallbacklnk", (Icallback)test_callback_linkhandle_btn);
     iup_xml_builder_add_user_data(builder, "testdata", (void*)"Das hier ist ein userdata text :)");
 
     iup_xml_builder_parse(builder);
 
     Ihandle *result = iup_xml_builder_get_result(builder, "testdialog");
 
-    result = iup_xml_builder_get_result_new(builder, "testdialog2");
+    DEBUG_LOG("=> copy from window:\n");
+
+    /*copy interface struggles with handle linking. Currently it is better 
+      to create a new builder for each copy. linking have to be manually.
+    */
+    //Ihandle * result_win = iup_xml_builder_get_result_new(builder, "window");
+    Ihandle * result_win = iup_xml_builder_get_result(builder, "window");
 
     Ihandle *handle = iup_xml_builder_get_main(result);
+
+    Ihandle *window = iup_xml_builder_get_main(result_win);
+
+    Ihandle *hbox = iup_xml_builder_get_name(result, "myhbox");
+
+    IupAppend(hbox, window);
 
     IupShowXY(handle, IUP_CENTER, IUP_CENTER);
 
@@ -59,9 +83,8 @@ static void test_xml_builder_parse_file() {
 
     assert(handle != NULL);
 
-    iup_xml_builder_free_result(&result);
-
-    assert(result == NULL);
+    //iup_xml_builder_free_result(&result_win);
+    //assert(result_win == NULL);
 
     iup_xml_builder_free(&builder);
 

@@ -1,6 +1,6 @@
 include ../make_config
 
-CFLAGS+=-std=c11
+CFLAGS+=-std=c11 -Wall
 
 #-ggdb  -mwindows
 #-pg for profiling 
@@ -70,6 +70,7 @@ $(_SRC_FILES):
 test_xml_builder: mkbuilddir $(BUILDPATH)$(BIN)
 	$(CC) $(CFLAGS) ./test/test_xml_builder.c -o $(BUILDPATH)test_xml_builder.exe -I./src/ $(INCLUDEDIR) $(USED_LIBSDIR) -static $(USED_LIBS) $(debug)
 	-cp test/dialog.xml $(BUILDPATH)dialog.xml
+	-cp test/window.xml $(BUILDPATH)window.xml
 	#$(BUILDPATH)test_xml_builder.exe
 
 .PHONY: clean mkbuilddir small

@@ -1,7 +1,9 @@
 <dialog>
     <!--<params>-->
-        <hbox param="-">
+        <vbox param="-" name="myhbox">
+            <!-- this is an invalid class an will be ignored -->
             <invalid>
+                <!-- All invalid parameter or attributes will be skipped or won't take effect like the callback -->
                 <string param="-" value=":c" >Langes Label:</string>
                 <string value=":c" >Langes Label:</string>
                 <string param="-" >Langes Label:</string>
@@ -16,13 +18,16 @@
                 <attrs value='TITLE="ein button",RASTERSIZE=125,FGCOLOR=#662211' />
             </button>
             <button>
-                <callback event="ACTION" name="testcallback" />
-                <user-data name="hero" value="testdata" />
+                <callback event="ACTION" name="testcallbacklnk" />
+                <!-- this an intern handle(parameter "ref" is missing) -->
+                <handle name="mylist" />
                 <attrs value=":c" >TITLE="Ein anderer Button", RASTERSIZE=125, FGCOLOR=#FF2266</attrs>
             </button>
             <flatbutton>
                 <attr name="TITLE" value="ein button" />
-                <callback event="FLAT_ACTION" name="testcallback" />
+                <callback event="FLAT_ACTION" name="testcallbacklnk" />
+                <!-- this handle is a reference to another xml resource "window" -->
+                <handle ref="window" name="mylist" />
                 <user-data name="hero" value="testdata" />
             </flatbutton>
             <label>
@@ -47,7 +52,7 @@
                 <attr name="VALUE" value="Some text isn't it?" />
                 <attr name="RASTERSIZE" value="125" />
             </text>
-        </hbox>
+        </vbox>
     <!--</params>-->
     <attr name="TITLE" value="generic iup Dialog" />
     <attr name="SIZE" value="HALFxHALF" />

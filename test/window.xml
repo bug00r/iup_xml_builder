@@ -1,0 +1,42 @@
+<hbox>
+    <button>
+        <callback event="ACTION" name="testcallback" />
+        <user-data name="hero" value="testdata" />
+        <attrs value='TITLE="window: ein button",RASTERSIZE=125,FGCOLOR=#662211' />
+    </button>
+    <button>
+        <callback event="ACTION" name="testcallbacklnk" />
+        <!-- this an intern handle(parameter "ref" is missing) -->
+        <handle name="mylist" />
+        <attrs value=":c" >TITLE="window: Ein anderer Button", RASTERSIZE=125, FGCOLOR=#FF2266</attrs>
+    </button>
+    <flatbutton>
+        <attr name="TITLE" value="window: ein button" />
+        <callback event="FLAT_ACTION" name="testcallback" />
+        <!-- this handle is a reference to another xml resource "window" -->
+        <user-data name="hero" value="testdata" />
+    </flatbutton>
+    <label>
+        <!-- value=":c" means text content of node <attr>textcontent</attr> -->
+        <!-- this string is for parameter if needed -->
+        <!-- <string param="-" value=":c" >Langes Label:</string>-->
+        <string param="-" value=":c" ><![CDATA[<b>window: Ein super mega langes label</b>]]></string>
+        <attr name="ACTIVE" value="NO" />
+        <!--<attr name="TITLE" value=":c" >Langes Label:</attr>-->
+        <!--<attr name="RASTERSIZE" value="56" />-->
+        <!--<attr type="handle" name="IMAGE" value="image_handle_name" />-->
+    </label>
+    <list name="mylist">
+        <attr name="1" value="first" />
+        <attr name="2" value="second" />
+        <attr name="3" value="third" />
+        <attr name="4" value="fourth" />
+        <attr name="DROPDOWN" value="YES" />
+        <attr name="VALUE" value="3" />
+    </list>
+    <text name="mytext">
+        <attr name="VALUE" value="Some text isn't it?" />
+        <attr name="RASTERSIZE" value="125" />
+    </text>
+</hbox>
+

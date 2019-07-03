@@ -31,6 +31,8 @@
 
 typedef struct {
     dl_list_t *xml_res;
+	dl_list_t *handlelinks;
+	dl_list_t *current_handle_links;
     dl_list_t *err;
 	uint32_t cntparsed;
 	Ihandle * parsed;
