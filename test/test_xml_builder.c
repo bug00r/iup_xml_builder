@@ -67,6 +67,8 @@ static void test_xml_builder_parse_file() {
 
     Ihandle *handle = iup_xml_builder_get_main(result);
 
+    DEBUG_LOG_ARGS("class of handle: %s\n", IupGetClassName(handle));
+
     Ihandle *window = iup_xml_builder_get_main(result_win);
 
     Ihandle *hbox = iup_xml_builder_get_name(result, "myhbox");

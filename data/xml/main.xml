@@ -1,0 +1,36 @@
+<dialog>
+    <vbox param="-">
+        <attr name="MARGIN" value="5x5" />
+        <split>
+            <frame>
+                <text name="xml">
+                    <attr name="EXPAND" value="YES" />
+                    <attr name="MULTILINE" value="YES" />
+                    <attr name="WORDWRAP" value="YES" />
+                </text>
+                <attr name="TITLE" value="Xml - Source" />
+            </frame>
+            <vbox>
+                <attr name="ALIGNMENT" value="ACENTER" />
+                <button>
+                    <attr name="TITLE" value="PREVIEW" />
+                    <attr name="RASTERSIZE" value="100" />
+                    <handle name="xml" />
+                    <handle name="log" />
+                    <callback event="ACTION" name="previewclb" />
+                </button>
+                <frame>
+                    <text name="log">
+                        <attr name="EXPAND" value="YES" />
+                        <attr name="MULTILINE" value="YES" />
+                        <attr name="WORDWRAP" value="YES" />
+                    </text>
+                    <attr name="TITLE" value="Logging" />
+                </frame>
+            </vbox>
+            <attr name="ORIENTATION" value="HORIZONTAL" />  
+        </split>
+    </vbox>
+    <attr name="TITLE" value="Iup Xml Builder - Preview" />
+    <attr name="SIZE" value="HALFxHALF" />
+</dialog>
