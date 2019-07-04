@@ -27,6 +27,7 @@ static int _iup_xb_prev_show_preview(Ihandle *ih) {
 
     if (strcmp(IupGetClassName(dialog),"dialog") != 0) {
         dialog = IupDialog(main_);
+        IupSetAttribute(dialog, "SIZE", "HALFxHALF");
     }
 
     IupShowXY(dialog, IUP_CENTER, IUP_CENTER);
