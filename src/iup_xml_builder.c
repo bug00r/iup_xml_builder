@@ -242,11 +242,36 @@ static void __iup_xml_builder_xml_res_free(iup_xml_builder_t *builder) {
     dl_list_free(&builder->xml_res);
 }
 
-static void __iup_xml_builder_err_free(iup_xml_builder_t *builder) {
-    //todo free items if need
-    //..
-    //free dl only
+
+static void __iup_xb_err_free(void **data) {
+    if ( data != NULL && *data != NULL ) {
+        char *err = *data;
+        free(err);
+        *data = NULL;
+    }
+}
+
+static void __iup_xml_builder_err_free(iup_xml_builder_t *builder) { 
+    dl_list_each(builder->err, __iup_xb_err_free);
     dl_list_free(&builder->err);
+}
+
+static void _iup_xb_add_err(iup_xml_builder_t *builder, const char * format, ...) {
+
+    va_list vl;
+	va_start(vl, format);
+    dl_list_append( builder->err, format_string_va_new(format, vl));
+	va_end(vl);
+    
+}
+
+static void _iup_xb_add_xml_err(iup_xml_builder_t *builder, xmlErrorPtr error) {
+
+    _iup_xb_add_err(builder, "%s%s%s%s",  error->message,
+                                (error->str1 != NULL ? error->str1 : ""),
+                                (error->str2 != NULL ? error->str2 : ""),
+                                (error->str3 != NULL ? error->str3 : ""));
+
 }
 
 static bool is_attribute(const char *text) {
@@ -743,7 +768,6 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
                 if (child) {
                     dl_list_append(parent_entity->children, child);
                 }
-                
             }
 
             iup_xb_parse_entity_reset(cur_entity);
@@ -755,6 +779,10 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
         DEBUG_LOG_ARGS("END: parent: %s node: %s\n", (node->parent != NULL ? node->parent->name : NULL),  node->name );
 
         handle = __iup_xb_handle_from_node(builder, node, parent_entity);
+
+        if (!handle) {
+            _iup_xb_add_err(builder, "Unknown Iup Ui Element \"%s\"", node->name);
+        }
 
         iup_xb_parse_entity_free(&cur_entity);
     }
@@ -794,14 +822,26 @@ iup_xml_builder_t* iup_xml_builder_new() {
 void iup_xml_builder_add_file(iup_xml_builder_t *builder, const char *name, const char* filename) {
     if (builder != NULL  && __iup_cb_string_is_not_blank(name)) {
         xmlDocPtr newsrc = xmlReadFile(filename, "UTF-8", 0);
-        dl_list_append(builder->xml_res, __iup_xb_xml_res_new(name, newsrc));
+        xmlErrorPtr err = xmlGetLastError();
+        if (err == NULL) {
+            dl_list_append(builder->xml_res, __iup_xb_xml_res_new(name, newsrc));
+        } else {
+            _iup_xb_add_xml_err(builder, err);
+        }
+
     }
 }
 
 void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char *name, const char * buffer, int size) {
     if (builder != NULL  && __iup_cb_string_is_not_blank(name)) {
         xmlDocPtr newsrc = xmlReadMemory(buffer, size, "default", "UTF-8", 0);
-        dl_list_append(builder->xml_res, __iup_xb_xml_res_new(name, newsrc));
+        xmlErrorPtr err = xmlGetLastError();
+        if (err == NULL) {
+            dl_list_append(builder->xml_res, __iup_xb_xml_res_new(name, newsrc));
+        } else {
+            _iup_xb_add_xml_err(builder, err);
+        }
+
     }
 }
 

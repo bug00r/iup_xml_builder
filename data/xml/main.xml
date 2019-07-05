@@ -11,7 +11,7 @@
                 <attr name="TITLE" value="Xml - Source" />
             </frame>
             <vbox>
-                <attr name="ALIGNMENT" value="ACENTER" />
+                <attr name="ALIGNMENT" value="ACENTER:ACENTER" />
                 <button>
                     <attr name="TITLE" value="PREVIEW" />
                     <attr name="RASTERSIZE" value="100" />

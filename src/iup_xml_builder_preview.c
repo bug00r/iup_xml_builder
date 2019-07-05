@@ -1,4 +1,5 @@
 
+#include "dl_list.h"
 #include "xml_utils.h"
 #include "resource.h"
 #include "iup_xml_builder.h"
@@ -6,33 +7,68 @@
 
 EXTERN_BLOB(zip_resource, 7z);
 
+void _iup_xb_prev_xml_err_to_handle(void **data, void *log) {
+    if ( data != NULL && *data != NULL ) {
+        IupSetAttribute(log, "APPEND", (char*)*data);
+    }
+}
+
+static bool _iup_xb_prev_add_err(iup_xml_builder_t *builder, Ihandle *log) {
+    bool logged = false;
+
+    if (log != NULL && builder->err->cnt > 0 ) {
+        dl_list_each_data(builder->err, (void*)log, _iup_xb_prev_xml_err_to_handle);
+        logged = true;
+    }
+    
+    return logged;
+}
+
 static int _iup_xb_prev_show_preview(Ihandle *ih) {
+
+    IupSetAttribute(ih, "ACTIVE", "NO");
 
     Ihandle *xml = (Ihandle*)IupGetAttribute(ih, "xml");
     Ihandle *log = (Ihandle*)IupGetAttribute(ih, "log");
 
     const char * xml_val = (const char*)IupGetAttribute(xml, "VALUE");
 
-    iup_xml_builder_t *builder = iup_xml_builder_new();
+    size_t input_len = strlen(xml_val);
 
-    iup_xml_builder_add_bytes(builder, "main",  xml_val, strlen(xml_val));
+    if (input_len > 0 ) {
+        
+        iup_xml_builder_t *builder = iup_xml_builder_new();
 
-    iup_xml_builder_parse(builder);
+        iup_xml_builder_add_bytes(builder, "main",  xml_val, strlen(xml_val));
 
-    Ihandle *mres = iup_xml_builder_get_result(builder, "main");
+        if ( !_iup_xb_prev_add_err(builder, log) ) {
 
-    Ihandle * main_ = iup_xml_builder_get_main(mres);
+            iup_xml_builder_parse(builder);
 
-    Ihandle *dialog = main_;
+            if ( !_iup_xb_prev_add_err(builder, log) ) {
 
-    if (strcmp(IupGetClassName(dialog),"dialog") != 0) {
-        dialog = IupDialog(main_);
-        IupSetAttribute(dialog, "SIZE", "HALFxHALF");
+                Ihandle *mres = iup_xml_builder_get_result(builder, "main");
+
+                Ihandle * main_ = iup_xml_builder_get_main(mres);
+
+                Ihandle *dialog = main_;
+
+                if (strcmp(IupGetClassName(dialog),"dialog") != 0) {
+                    dialog = IupDialog(main_);
+                    IupSetAttribute(dialog, "SIZE", "HALFxHALF");
+                }
+
+                IupShowXY(dialog, IUP_CENTER, IUP_CENTER);
+
+            }
+
+        } 
+
+        iup_xml_builder_free(&builder);
+
     }
 
-    IupShowXY(dialog, IUP_CENTER, IUP_CENTER);
-
-    iup_xml_builder_free(&builder);
+     IupSetAttribute(ih, "ACTIVE", "YES");
 
     return IUP_DEFAULT;
 }
