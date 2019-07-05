@@ -77,11 +77,11 @@ int main(int argc, char **argv) {
 
     IupOpen(&argc, &argv);
 
-    iup_xml_builder_t *builder = iup_xml_builder_new();
-	
     archive_resource_t* ar = archive_resource_memory(&_binary_zip_resource_7z_start, (size_t)&_binary_zip_resource_7z_size);
     
     xml_source_t* xml_src = xml_source_from_resname(ar, "main");
+
+    iup_xml_builder_t *builder = iup_xml_builder_new();
 
     iup_xml_builder_add_bytes(builder, "main",  (const char *)xml_src->src_data, *xml_src->src_size);
     
