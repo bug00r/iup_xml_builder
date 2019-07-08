@@ -820,8 +820,19 @@ iup_xml_builder_t* iup_xml_builder_new() {
     return newbuilder;
 }
 
+static void __iup_xb_huilder_xml_error_func(void *ctx, const char *msg, ...) {
+    iup_xml_builder_t *builder = (iup_xml_builder_t *)ctx;
+
+    va_list vl;
+	va_start(vl, msg);
+    dl_list_append( builder->err, format_string_va_new(msg, vl));
+	va_end(vl);
+
+}
+
 void iup_xml_builder_add_file(iup_xml_builder_t *builder, const char *name, const char* filename) {
     if (builder != NULL  && __iup_cb_string_is_not_blank(name)) {
+        xmlSetGenericErrorFunc(builder,__iup_xb_huilder_xml_error_func);
         xmlDocPtr newsrc = xmlReadFile(filename, "UTF-8", 0);
         xmlErrorPtr err = xmlGetLastError();
         if (err == NULL) {
@@ -835,6 +846,7 @@ void iup_xml_builder_add_file(iup_xml_builder_t *builder, const char *name, cons
 
 void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char *name, const char * buffer, int size) {
     if (builder != NULL  && __iup_cb_string_is_not_blank(name)) {
+        xmlSetGenericErrorFunc(builder, __iup_xb_huilder_xml_error_func);
         xmlDocPtr newsrc = xmlReadMemory(buffer, size, "default", "UTF-8", 0);
         xmlErrorPtr err = xmlGetLastError();
         if (err == NULL) {

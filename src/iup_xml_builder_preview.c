@@ -31,6 +31,7 @@ static int _iup_xb_prev_show_preview(Ihandle *ih) {
     Ihandle *xml = (Ihandle*)IupGetAttribute(ih, "xml");
     Ihandle *log = (Ihandle*)IupGetAttribute(ih, "log");
 
+    IupSetAttribute(log, "VALUE", "");
     const char * xml_val = (const char*)IupGetAttribute(xml, "VALUE");
 
     size_t input_len = strlen(xml_val);

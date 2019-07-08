@@ -24,6 +24,7 @@
                         <attr name="EXPAND" value="YES" />
                         <attr name="MULTILINE" value="YES" />
                         <attr name="WORDWRAP" value="YES" />
+                        <attr name="APPENDNEWLINE" value="NO" />
                     </text>
                     <attr name="TITLE" value="Logging" />
                 </frame>
