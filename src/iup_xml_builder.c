@@ -378,7 +378,7 @@ static void __iup_xb_config_userdata(void **data, void *params) {
     if (userdat) {
         DEBUG_LOG_ARGS("set callback %s = %s\n", userdat->name, userdat->value);
 
-        IupSetStrAttribute(handles[0], (const char *)userdat->name, IupGetAttribute(handles[1], (const char *)userdat->value));
+        IupSetAttribute(handles[0], (const char *)userdat->name, IupGetAttribute(handles[1], (const char *)userdat->value));
 
     }
 
