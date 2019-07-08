@@ -256,25 +256,6 @@ static void __iup_xml_builder_err_free(iup_xml_builder_t *builder) {
     dl_list_free(&builder->err);
 }
 
-static void _iup_xb_add_err(iup_xml_builder_t *builder, const char * format, ...) {
-
-    va_list vl;
-	va_start(vl, format);
-    dl_list_append( builder->err, format_string_va_new(format, vl));
-	va_end(vl);
-    
-}
-
-static void _iup_xb_add_xml_err(iup_xml_builder_t *builder, xmlErrorPtr error) {
-
-    _iup_xb_add_err(builder, "%s%s%s%s",  error->message,
-                                (error->str1 != NULL ? error->str1 : ""),
-                                (error->str2 != NULL ? error->str2 : ""),
-                                (error->str3 != NULL ? error->str3 : ""));
-    xmlResetLastError();
-
-}
-
 static bool is_attribute(const char *text) {
     return (strcmp(text, "attr") == 0);
 }
@@ -837,10 +818,8 @@ void iup_xml_builder_add_file(iup_xml_builder_t *builder, const char *name, cons
         xmlErrorPtr err = xmlGetLastError();
         if (err == NULL) {
             dl_list_append(builder->xml_res, __iup_xb_xml_res_new(name, newsrc));
-        } else {
-            _iup_xb_add_xml_err(builder, err);
-        }
-
+        } 
+        xmlResetLastError();
     }
 }
 
@@ -851,9 +830,8 @@ void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char *name, con
         xmlErrorPtr err = xmlGetLastError();
         if (err == NULL) {
             dl_list_append(builder->xml_res, __iup_xb_xml_res_new(name, newsrc));
-        } else {
-            _iup_xb_add_xml_err(builder, err);
-        }
+        } 
+        xmlResetLastError();
 
     }
 }
