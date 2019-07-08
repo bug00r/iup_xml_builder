@@ -74,6 +74,22 @@ static int _iup_xb_prev_show_preview(Ihandle *ih) {
     return IUP_DEFAULT;
 }
 
+int on_xml_src_caret_changed(Ihandle *ih, int _lin, int _col, int _pos) {
+    
+    DEBUG_LOG_ARGS("lin: %i, pos: %i, col: %i\n",_lin, _pos, _col);
+
+    Ihandle *line = (Ihandle*)IupGetAttribute(ih, "line");
+    Ihandle *pos = (Ihandle*)IupGetAttribute(ih, "pos");
+    Ihandle *col = (Ihandle*)IupGetAttribute(ih, "col");
+
+    IupSetStrf(line, "TITLE", "%i", _lin);
+    IupSetStrf(pos, "TITLE", "%i", _pos);
+    IupSetStrf(col, "TITLE", "%i", _col);
+
+    return IUP_DEFAULT;
+
+}
+
 int main(int argc, char **argv) {
 
     IupOpen(&argc, &argv);
@@ -85,8 +101,9 @@ int main(int argc, char **argv) {
     iup_xml_builder_t *builder = iup_xml_builder_new();
 
     iup_xml_builder_add_bytes(builder, "main",  (const char *)xml_src->src_data, *xml_src->src_size);
-    
+
     iup_xml_builder_add_callback(builder, "previewclb", (Icallback)_iup_xb_prev_show_preview);
+    iup_xml_builder_add_callback(builder, "caretclb", (Icallback)on_xml_src_caret_changed);
 
     iup_xml_builder_parse(builder);
 

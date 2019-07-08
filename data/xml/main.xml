@@ -3,16 +3,46 @@
         <attr name="MARGIN" value="5x5" />
         <split>
             <frame>
-                <text name="xml">
-                    <attr name="EXPAND" value="YES" />
-                    <attr name="MULTILINE" value="YES" />
-                    <attr name="WORDWRAP" value="YES" />
-                </text>
                 <attr name="TITLE" value="Xml - Source" />
+                <vbox>
+                    <text name="xml">
+                        <attr name="EXPAND" value="YES" />
+                        <attr name="MULTILINE" value="YES" />
+                        <attr name="WORDWRAP" value="YES" />
+                        <callback event="CARET_CB" name="caretclb" />
+                        <handle name="line" />
+                        <handle name="pos" />
+                        <handle name="col" />
+                    </text>
+                    <hbox>
+                        <label>
+                            <attr name="TITLE" value="line: "/>
+                        </label>
+                        <label name="line">
+                            <attr name="TITLE" value="-"/>
+                            <attr name="RASTERSIZE" value="30"/>
+                        </label>
+                        <label>
+                            <attr name="TITLE" value="Col: "/>
+                        </label>
+                        <label name="col">
+                            <attr name="TITLE" value="-"/>
+                            <attr name="RASTERSIZE" value="30"/>
+                        </label>
+                        <label>
+                            <attr name="TITLE" value="Pos: "/>
+                        </label>
+                        <label name="pos">
+                            <attr name="TITLE" value="-"/>
+                            <attr name="RASTERSIZE" value="30"/>
+                        </label>
+                    </hbox>
+                </vbox>
             </frame>
             <vbox>
-                <attr name="ALIGNMENT" value="ACENTER:ACENTER" />
+                <attr name="ALIGNMENT" value="ACENTER" />
                 <button>
+                    <attr name="ALIGNMENT" value="ACENTER" />
                     <attr name="TITLE" value="PREVIEW" />
                     <attr name="RASTERSIZE" value="100" />
                     <handle name="xml" />
