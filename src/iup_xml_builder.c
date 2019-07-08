@@ -271,6 +271,7 @@ static void _iup_xb_add_xml_err(iup_xml_builder_t *builder, xmlErrorPtr error) {
                                 (error->str1 != NULL ? error->str1 : ""),
                                 (error->str2 != NULL ? error->str2 : ""),
                                 (error->str3 != NULL ? error->str3 : ""));
+    xmlResetLastError();
 
 }
 
