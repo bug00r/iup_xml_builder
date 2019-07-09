@@ -67,24 +67,17 @@ typedef struct {
     iup_xb_elem_type_t type;
 } iup_xb_elem_t;
 
+typedef void* (*IUP_XB_GET_VOID_FUNC)(iup_xml_builder_t*, iup_xb_elem_t*, Ihandle*, iup_xb_parse_entity_t*);
+
+static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_entity_t *parent_entity, iup_xb_elem_t *element);
+
 //EOF NEW
-
-static char * __iup_xb_copy_string(const char * string) {
-	size_t size = strlen(string) + 1;
-	char * copy = malloc(size*sizeof(char));
-	memcpy(copy, string, size);
-	return copy;
-}
-
-static bool __iup_cb_string_is_not_blank(const char * string) {
-    return (string != NULL && (strlen(string) > 0));
-}
 
 static iup_xml_resource_t* __iup_xb_xml_res_new(const char *name, xmlDocPtr doc) {
     iup_xml_resource_t* newres = malloc(sizeof(iup_xml_resource_t));
 
     if (newres != NULL) {
-        newres->name = __iup_xb_copy_string(name);
+        newres->name = copy_string(name);
         newres->doc = doc;
     }
 
@@ -360,7 +353,7 @@ static void __iup_xb_config_attr_handle(void **data, void *params) {
     if (attr) {
         DEBUG_LOG_ARGS("set attr handle %s = %p\n", attr->name, attr->handle);
 
-        IupSetAttributeHandle((Ihandle*)params, (const char *)attr->name, (const char *)attr->handle);
+        IupSetAttributeHandle((Ihandle*)params, (const char *)attr->name, (void*)attr->handle);
 
     }
 
@@ -623,6 +616,21 @@ static iup_xb_params_t* __iup_xb_handle_param_get(iup_xml_builder_t *builder, iu
     return result;
 }
 
+static iup_xb_handle_t* __iup_xb_handle_child_get(iup_xml_builder_t *builder, iup_xb_elem_t *elem, Ihandle *param, iup_xb_parse_entity_t *cur_entity) {
+    iup_xb_handle_t * result = NULL;
+
+    if (param != NULL && cur_entity != NULL) {
+
+        __iup_xb_config_handle(builder, param, cur_entity);
+
+        result = __iup_xb_handle_create(param, elem);
+
+    }
+
+    return result;
+}
+
+
 static iup_xb_attrs_handle_t* __iup_xb_handle_attr_create(Ihandle* param, xmlNodePtr node) {
 
     iup_xb_attrs_handle_t *result = NULL;
@@ -739,7 +747,7 @@ static iup_xb_attr_t* __iup_xb_callback_get(iup_xb_elem_t *elem) {
 
 }
 
-static void __iup_xb_set_attr_to_list(dl_list_t *list, iup_xb_elem_t *xb_element, iup_xb_attr_t* (*attr_func)(xmlNodePtr)) {
+static void __iup_xb_set_attr_to_list(dl_list_t *list, iup_xb_elem_t *xb_element, iup_xb_attr_t* (*attr_func)(iup_xb_elem_t *xb_element)) {
     iup_xb_attr_t *data = attr_func(xb_element);
                 
     if (data) {
@@ -747,12 +755,25 @@ static void __iup_xb_set_attr_to_list(dl_list_t *list, iup_xb_elem_t *xb_element
     }
 }
 
-static void __iup_xb_set_handle_to_list(dl_list_t *list, iup_xb_elem_t *elem, iup_xb_handle_lnk_t* (*attr_func)(xmlNodePtr)) {
+static void __iup_xb_set_handle_to_list(dl_list_t *list, iup_xb_elem_t *elem, iup_xb_handle_lnk_t* (*attr_func)(iup_xb_elem_t *xb_element)) {
     
     iup_xb_handle_lnk_t *data = attr_func(elem);
                 
     if (data) {
         dl_list_append(list, data);
+    }
+}
+
+static void _iup_xb_create_set_handle(iup_xml_builder_t *builder, iup_xb_parse_entity_t* cur_entity, iup_xb_elem_t* xb_element, dl_list_t *handle_list,
+              void* (*get_func)(iup_xml_builder_t*, iup_xb_elem_t*, Ihandle*, iup_xb_parse_entity_t*)) {
+    
+    Ihandle * p_child = __iup_xb_parse_node(builder, cur_entity, xb_element);
+
+    if (p_child) {
+        
+        void* child = get_func(builder, xb_element, p_child, cur_entity);
+
+        if (child) dl_list_append(handle_list, child);
     }
 }
 
@@ -766,8 +787,8 @@ void _iup_xb_get_elem_type(iup_xb_elem_t *element, xmlNodePtr node) {
 
     iup_xb_elem_type_t result = IUP_XB_E_TYPE_UNKNOWN; 
     
-    const unsigned char *tagname = (const char*)node->name;
-    const unsigned char *sep = strrchr(tagname, '-');
+    const char *tagname = (const char*)node->name;
+    const char *sep = strrchr(tagname, '-');
     size_t len_prefix = 0;
     size_t len_suffix = 0;
     size_t sep_offset = 0;
@@ -789,14 +810,14 @@ void _iup_xb_get_elem_type(iup_xb_elem_t *element, xmlNodePtr node) {
 
     }
 
-    const unsigned char *tag = tagname + len_prefix + sep_offset;
+    const char *tag = tagname + len_prefix + sep_offset;
 
-    element->tag = tag;
+    element->tag = (const unsigned char *)tag;
 
     len_suffix = strlen((tagname + len_prefix + sep_offset));
 
     DEBUG_LOG_ARGS("tag: %s , attr: %i, param: %i, len prefix: %i ,name: %s\n",
-        node->name, isattr, isparam, len_prefix, tag
+        node->name, isattr, isparam, (int)len_prefix, tag
     );
 
     if ( strncmp(tag, "str", len_suffix) == 0 ) {
@@ -869,50 +890,19 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
                 case IUP_XB_E_TYPE_ATTRS_STR:   __iup_xb_set_attr_to_list(parent_entity->attrs_s, xb_element, __iup_xb_attrs_get);break;
                 case IUP_XB_E_TYPE_PARAM_STR:  { 
                     iup_xb_params_t * param = __iup_xb_str_param_get(xb_element);
-                    
                     if ( param ) dl_list_append(parent_entity->params, param);
-                
                     break; 
                 }
                 case IUP_XB_E_TYPE_ATTR_HANDLE: { 
-                    Ihandle * p_child = __iup_xb_parse_node(builder, cur_entity, xb_element);
-
-                    if ( p_child ) {
-                        DEBUG_LOG_ARGS("handle obj: %p\n", p_child);
-
-                        iup_xb_attrs_handle_t * attr_handle = __iup_xb_handle_attr_get(builder, xb_element, p_child, cur_entity);
-
-                        if ( attr_handle ) dl_list_append(parent_entity->attrs_handles, attr_handle);
-
-                        DEBUG_LOG_ARGS("handle = %p name = %s\n", attr_handle->handle, attr_handle->name);
-                    }
+                    _iup_xb_create_set_handle(builder, cur_entity, xb_element, parent_entity->attrs_handles, (IUP_XB_GET_VOID_FUNC)__iup_xb_handle_attr_get);
                     break;
                 }
                 case IUP_XB_E_TYPE_PARAM_HANDLE: { 
-                    Ihandle * p_child = __iup_xb_parse_node(builder, cur_entity, xb_element);
-
-                    if ( p_child ) {
-                        DEBUG_LOG_ARGS("handle obj: %p\n", p_child);
-
-                        iup_xb_params_t * param = __iup_xb_handle_param_get(builder, xb_element, p_child, cur_entity);
-
-                        if ( param ) dl_list_append(parent_entity->params, param);
-
-                        DEBUG_LOG_ARGS("handle = %p name = %s\n", param->value->handle, param->value->name);
-                    }
+                    _iup_xb_create_set_handle(builder, cur_entity, xb_element, parent_entity->params, (IUP_XB_GET_VOID_FUNC)__iup_xb_handle_param_get);
                     break; 
                 }
                 case IUP_XB_E_TYPE_CHILD_HANDLE: { 
-                    //is children
-                    Ihandle * child_handle = __iup_xb_parse_node(builder, cur_entity, xb_element);
-                    
-                    __iup_xb_config_handle(builder, child_handle, cur_entity);
-
-                    iup_xb_handle_t* child = __iup_xb_handle_create(child_handle, xb_element);
-                    
-                    if (child) {
-                        dl_list_append(parent_entity->children, child);
-                    }
+                    _iup_xb_create_set_handle(builder, cur_entity, xb_element, parent_entity->children, (IUP_XB_GET_VOID_FUNC)__iup_xb_handle_child_get);
                     break; 
                 }
                 case IUP_XB_E_TYPE_USERDATA: __iup_xb_set_attr_to_list(parent_entity->userdata, xb_element, __iup_xb_attr_get); break;
@@ -982,7 +972,7 @@ static void __iup_xb_huilder_xml_error_func(void *ctx, const char *msg, ...) {
 }
 
 void iup_xml_builder_add_file(iup_xml_builder_t *builder, const char *name, const char* filename) {
-    if (builder != NULL  && __iup_cb_string_is_not_blank(name)) {
+    if (builder != NULL  && is_not_blank(name)) {
         xmlSetGenericErrorFunc(builder,__iup_xb_huilder_xml_error_func);
         xmlDocPtr newsrc = xmlReadFile(filename, "UTF-8", 0);
         xmlErrorPtr err = xmlGetLastError();
@@ -994,7 +984,7 @@ void iup_xml_builder_add_file(iup_xml_builder_t *builder, const char *name, cons
 }
 
 void iup_xml_builder_add_bytes(iup_xml_builder_t *builder, const char *name, const char * buffer, int size) {
-    if (builder != NULL  && __iup_cb_string_is_not_blank(name)) {
+    if (builder != NULL  && is_not_blank(name)) {
         xmlSetGenericErrorFunc(builder, __iup_xb_huilder_xml_error_func);
         xmlDocPtr newsrc = xmlReadMemory(buffer, size, "default", "UTF-8", 0);
         xmlErrorPtr err = xmlGetLastError();
@@ -1034,11 +1024,11 @@ static void __iup_xb_link_handler_single_global(void **data, void * _params) {
             
             Ihandle *localhandles = (Ihandle*)IupGetAttribute(res, "handles");
 
-            Ihandle *src = (Ihandle*)IupGetAttribute(localhandles, handlelink->name);
+            Ihandle *src = (Ihandle*)IupGetAttribute(localhandles, (const char*)handlelink->name);
 
             if ( src != NULL ) {
                 
-                IupSetAttribute(handlelink->target, handlelink->name, (void*)src);
+                IupSetAttribute(handlelink->target, (const char*)handlelink->name, (void*)src);
             }
 
         }
@@ -1058,10 +1048,10 @@ static void __iup_xb_link_handler_single_local(void **data, void * _params) {
         Ihandle *localhandles = (Ihandle *)params[0];
         Ihandle *parent = (Ihandle *)params[1];
 
-        Ihandle *src = (Ihandle*)IupGetAttribute(localhandles, handlelink->name);
+        Ihandle *src = (Ihandle*)IupGetAttribute(localhandles, (const char*)handlelink->name);
 
         if ( src != NULL && handlelink->parent == parent ) {
-            IupSetAttribute(handlelink->target, handlelink->name, (void*)src);
+            IupSetAttribute(handlelink->target, (const char*)handlelink->name, (void*)src);
         }
 
     }
@@ -1169,7 +1159,7 @@ Ihandle* iup_xml_builder_get_result_new(iup_xml_builder_t *builder, const char *
     
     Ihandle *result = NULL;
 
-    if (builder != NULL  && __iup_cb_string_is_not_blank(name)) {
+    if (builder != NULL  && is_not_blank(name)) {
 
         Ihandle *entity = (Ihandle*)IupGetAttribute(builder->parsed, name);
 
@@ -1211,7 +1201,7 @@ Ihandle* iup_xml_builder_get_name(Ihandle *result_handle, const char *name) {
 
     Ihandle *result = NULL;
 
-    if (result_handle != NULL  && __iup_cb_string_is_not_blank(name)) {
+    if (result_handle != NULL  && is_not_blank(name)) {
 
         Ihandle* handles = (Ihandle*)IupGetAttribute(result_handle, "handles");
 
@@ -1259,8 +1249,4 @@ void iup_xml_builder_free(iup_xml_builder_t **builder) {
         free(to_delete);
         *builder = NULL;
     }
-}
-
-void iup_xml_builder_perr(iup_xml_builder_t*builder) {
-
 }

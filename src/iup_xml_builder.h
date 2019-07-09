@@ -7,27 +7,13 @@
 #include <iup.h>
 
 #include "dl_list.h"
+#include "string_utils.h"
+#include "defs.h"
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
-
-#ifndef DEBUG_LOG_ARGS
-	#if debug != 0
-		#define DEBUG_LOG_ARGS(fmt, ...) printf(" %s:%s:%i => ", __FILE__, __func__, __LINE__);printf((fmt), __VA_ARGS__)
-	#else
-		#define DEBUG_LOG_ARGS(fmt, ...)
-	#endif
-#endif
-
-#ifndef DEBUG_LOG
-	#if debug != 0
-		#define DEBUG_LOG(msg) printf(" %s:%s:%i => ", __FILE__, __func__, __LINE__);printf((msg))
-	#else
-		#define DEBUG_LOG(msg)
-	#endif
-#endif
 
 typedef struct {
     dl_list_t *xml_res;
@@ -62,7 +48,5 @@ void iup_xml_builder_free_result(Ihandle **result);
 
 Ihandle* iup_xml_builder_get_main(Ihandle *result_handle);
 Ihandle* iup_xml_builder_get_name(Ihandle *result_handle, const char *name);
-
-void iup_xml_builder_perr(iup_xml_builder_t *builder);
 
 #endif
