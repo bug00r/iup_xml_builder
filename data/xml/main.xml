@@ -1,5 +1,5 @@
 <dialog>
-    <vbox param="-">
+    <param-vbox >
         <attr name="MARGIN" value="5x5" />
         <split>
             <frame>
@@ -61,7 +61,7 @@
             </vbox>
             <attr name="ORIENTATION" value="HORIZONTAL" />  
         </split>
-    </vbox>
+    </param-vbox >
     <attr name="TITLE" value="Iup Xml Builder - Preview" />
     <attr name="SIZE" value="HALFxHALF" />
 </dialog>

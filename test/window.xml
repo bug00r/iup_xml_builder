@@ -1,7 +1,7 @@
 <hbox>
     <button>
         <callback event="ACTION" name="testcallback" />
-        <user-data name="hero" value="testdata" />
+        <userdata name="hero" value="testdata" />
         <attrs value='TITLE="window: ein button",RASTERSIZE=125,FGCOLOR=#662211' />
     </button>
     <button>
@@ -14,13 +14,13 @@
         <attr name="TITLE" value="window: ein button" />
         <callback event="FLAT_ACTION" name="testcallback" />
         <!-- this handle is a reference to another xml resource "window" -->
-        <user-data name="hero" value="testdata" />
+        <userdata name="hero" value="testdata" />
     </flatbutton>
     <label>
         <!-- value=":c" means text content of node <attr>textcontent</attr> -->
         <!-- this string is for parameter if needed -->
         <!-- <string param="-" value=":c" >Langes Label:</string>-->
-        <string param="-" value=":c" ><![CDATA[<b>window: Ein super mega langes label</b>]]></string>
+        <param-str value=":c" ><![CDATA[<b>window: Ein super mega langes label</b>]]></param-str>
         <attr name="ACTIVE" value="NO" />
         <!--<attr name="TITLE" value=":c" >Langes Label:</attr>-->
         <!--<attr name="RASTERSIZE" value="56" />-->

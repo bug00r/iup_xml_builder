@@ -1,12 +1,12 @@
 <dialog>
     <!--<params>-->
-        <vbox param="-" name="myhbox">
+        <param-vbox name="myhbox">
             <!-- this is an invalid class an will be ignored -->
             <invalid>
                 <!-- All invalid parameter or attributes will be skipped or won't take effect like the callback -->
-                <string param="-" value=":c" >Langes Label:</string>
-                <string value=":c" >Langes Label:</string>
-                <string param="-" >Langes Label:</string>
+                <param-str param="-" value=":c" >Langes Label:</param-str>
+                <param-str value=":c" >Langes Label:</param-str>
+                <param-str param="-" >Langes Label:</param-str>
                 <attr />
                 <attr name="false" />
                 <attr value="false" />
@@ -14,7 +14,7 @@
             </invalid>
             <button>
                 <callback event="ACTION" name="testcallback" />
-                <user-data name="hero" value="testdata" />
+                <userdata name="hero" value="testdata" />
                 <attrs value='TITLE="ein button",RASTERSIZE=125,FGCOLOR=#662211' />
             </button>
             <button>
@@ -28,13 +28,13 @@
                 <callback event="FLAT_ACTION" name="testcallbacklnk" />
                 <!-- this handle is a reference to another xml resource "window" -->
                 <handle ref="window" name="mylist" />
-                <user-data name="hero" value="testdata" />
+                <userdata name="hero" value="testdata" />
             </flatbutton>
             <label>
                 <!-- value=":c" means text content of node <attr>textcontent</attr> -->
                 <!-- this string is for parameter if needed -->
                 <!-- <string param="-" value=":c" >Langes Label:</string>-->
-                <string param="-" value=":c" ><![CDATA[<b>Ein super mega langes label</b>]]></string>
+                <param-str value=":c" ><![CDATA[<b>Ein super mega langes label</b>]]></param-str>
                 <attr name="ACTIVE" value="NO" />
                 <!--<attr name="TITLE" value=":c" >Langes Label:</attr>-->
                 <!--<attr name="RASTERSIZE" value="56" />-->
@@ -52,8 +52,48 @@
                 <attr name="VALUE" value="Some text isn't it?" />
                 <attr name="RASTERSIZE" value="125" />
             </text>
-        </vbox>
+        </param-vbox>
     <!--</params>-->
     <attr name="TITLE" value="generic iup Dialog" />
     <attr name="SIZE" value="HALFxHALF" />
+    <attr-menu name="MENU">
+        <submenu>
+            <param-str value="File" />
+            <param-menu>
+                <item>
+                    <param-str value="FileEntry1" />
+                </item>
+                <submenu>
+                    <param-str value="Filesubmenu1" />
+                    <param-menu>
+                        <item>
+                            <param-str value="FileSubEntry1" />
+                        </item>
+                        <item>
+                            <param-str value="FileSubEntry2" />
+                        </item>
+                    </param-menu>
+                </submenu>
+            </param-menu>
+        </submenu>
+        <submenu>
+            <param-str value="Edit" />
+            <param-menu>
+                <item>
+                    <param-str value="EditEntry1" />
+                </item>
+                <submenu>
+                    <param-str value="Editsubmenu1" />
+                    <param-menu>
+                        <item>
+                            <param-str value="EditSubEntry1" />
+                        </item>
+                        <item>
+                            <param-str value="EditSubEntry2" />
+                        </item>
+                    </param-menu>
+                </submenu>
+            </param-menu>
+        </submenu>
+    </attr-menu>
 </dialog>
