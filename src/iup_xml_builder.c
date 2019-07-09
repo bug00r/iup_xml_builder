@@ -765,7 +765,7 @@ static void __iup_xb_set_handle_to_list(dl_list_t *list, iup_xb_elem_t *elem, iu
 }
 
 static void _iup_xb_create_set_handle(iup_xml_builder_t *builder, iup_xb_parse_entity_t* cur_entity, iup_xb_elem_t* xb_element, dl_list_t *handle_list,
-              void* (*get_func)(iup_xml_builder_t*, iup_xb_elem_t*, Ihandle*, iup_xb_parse_entity_t*)) {
+              IUP_XB_GET_VOID_FUNC get_func) {
     
     Ihandle * p_child = __iup_xb_parse_node(builder, cur_entity, xb_element);
 
@@ -816,44 +816,30 @@ void _iup_xb_get_elem_type(iup_xb_elem_t *element, xmlNodePtr node) {
 
     len_suffix = strlen((tagname + len_prefix + sep_offset));
 
-    DEBUG_LOG_ARGS("tag: %s , attr: %i, param: %i, len prefix: %i ,name: %s\n",
-        node->name, isattr, isparam, (int)len_prefix, tag
-    );
-
     if ( strncmp(tag, "str", len_suffix) == 0 ) {
         if ( isattr ) {
-            DEBUG_LOG("is string attribute\n");
             result = IUP_XB_E_TYPE_ATTR_STR;
         } else if (isparam) {
-            DEBUG_LOG("is string parameter\n");
             result = IUP_XB_E_TYPE_PARAM_STR;
         } else {
             result = IUP_XB_E_TYPE_UNKNOWN;
         }
     } else if ( strncmp(tag, "attr", len_suffix) == 0 ) {
-        DEBUG_LOG("is attr\n");
         result = IUP_XB_E_TYPE_ATTR_STR;
     } else if ( strncmp(tag, "attrs", len_suffix) == 0 ) {
-        DEBUG_LOG("is attrs\n");
         result = IUP_XB_E_TYPE_ATTRS_STR;
     } else if ( strncmp(tag, "userdata", len_suffix) == 0 ) {
-        DEBUG_LOG("is userdata\n");
         result = IUP_XB_E_TYPE_USERDATA;
     } else if ( strncmp(tag, "handle", len_suffix) == 0 ) {
-        DEBUG_LOG("is handle link\n");
         result = IUP_XB_E_TYPE_HANDLE_LINK;
     } else if ( strncmp(tag, "callback", len_suffix) == 0 ) {
-        DEBUG_LOG("is callback\n");
         result = IUP_XB_E_TYPE_CALLBACK;
     } else {
         if ( isattr ) {
-            DEBUG_LOG("is handle attribute\n");
             result = IUP_XB_E_TYPE_ATTR_HANDLE;
         } else if (isparam) {
-            DEBUG_LOG("is handle parameter\n");
             result = IUP_XB_E_TYPE_PARAM_HANDLE;
         } else {
-            DEBUG_LOG("is handle child \n");
             result = IUP_XB_E_TYPE_CHILD_HANDLE;
         }
     }
