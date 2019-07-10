@@ -37,11 +37,11 @@ static int _iup_xb_prev_show_preview(Ihandle *ih) {
     size_t input_len = strlen(xml_val);
 
     if (input_len > 0 ) {
-        
+
         iup_xml_builder_t *builder = iup_xml_builder_new();
 
         iup_xml_builder_add_bytes(builder, "main",  xml_val, strlen(xml_val));
-
+        
         if ( !_iup_xb_prev_add_err(builder, log) ) {
 
             iup_xml_builder_parse(builder);
@@ -75,16 +75,10 @@ static int _iup_xb_prev_show_preview(Ihandle *ih) {
 }
 
 int on_xml_src_caret_changed(Ihandle *ih, int _lin, int _col, int _pos) {
-    
-    DEBUG_LOG_ARGS("lin: %i, pos: %i, col: %i\n",_lin, _pos, _col);
 
-    Ihandle *line = (Ihandle*)IupGetAttribute(ih, "line");
-    Ihandle *pos = (Ihandle*)IupGetAttribute(ih, "pos");
-    Ihandle *col = (Ihandle*)IupGetAttribute(ih, "col");
-
-    IupSetStrf(line, "TITLE", "%i", _lin);
-    IupSetStrf(pos, "TITLE", "%i", _pos);
-    IupSetStrf(col, "TITLE", "%i", _col);
+    IupSetStrf((Ihandle*)IupGetAttribute(ih, "line"), "TITLE", "%i", _lin);
+    IupSetStrf((Ihandle*)IupGetAttribute(ih, "pos"), "TITLE", "%i", _pos);
+    IupSetStrf((Ihandle*)IupGetAttribute(ih, "col"), "TITLE", "%i", _col);
 
     return IUP_DEFAULT;
 

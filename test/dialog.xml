@@ -62,15 +62,18 @@
             <param-menu>
                 <item>
                     <param-str value="FileEntry1" />
+                    <param-null />
                 </item>
                 <submenu>
                     <param-str value="Filesubmenu1" />
                     <param-menu>
                         <item>
-                            <param-str value="FileSubEntry1" />
+                            <attr name="TITLE" value="FileSubEntry1" />
+                            <param-null />
                         </item>
                         <item>
-                            <param-str value="FileSubEntry2" />
+                            <attr name="TITLE" value="FileSubEntry2" />
+                            <param-null />
                         </item>
                     </param-menu>
                 </submenu>
@@ -81,15 +84,18 @@
             <param-menu>
                 <item>
                     <param-str value="EditEntry1" />
+                    <param-null />
                 </item>
                 <submenu>
                     <param-str value="Editsubmenu1" />
                     <param-menu>
                         <item>
-                            <param-str value="EditSubEntry1" />
+                            <attr name="TITLE" value="EditSubEntry1" />
+                            <param-null />
                         </item>
                         <item>
-                            <param-str value="EditSubEntry2" />
+                            <attr name="TITLE" value="EditSubEntry1" />
+                            <param-null />
                         </item>
                     </param-menu>
                 </submenu>
