@@ -838,11 +838,11 @@ static Ihandle* __iup_xb_parse_node(iup_xml_builder_t* builder, iup_xb_parse_ent
     xmlNodePtr node = element->node;
     
     if (node && node->type == XML_ELEMENT_NODE) {
-        
+
         xmlNodePtr curChild = node->children;
         
         iup_xb_parse_entity_t *cur_entity = iup_xb_parse_entity_new(); 
-        while(curChild && curChild != node->last ) {
+        while(curChild) {
 
             if (curChild->type != XML_ELEMENT_NODE) {
                 curChild = curChild->next;

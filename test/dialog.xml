@@ -12,6 +12,10 @@
                 <attr value="false" />
                 <callback event="ACTION" name="notexisttestcallback" />
             </invalid>
+            <label>
+                <attrs value='TITLE="testlabel:"' />
+            </label>
+            <label><attrs value='TITLE="testlabel2:"' /></label>
             <button>
                 <callback event="ACTION" name="testcallback" />
                 <userdata name="hero" value="testdata" />
