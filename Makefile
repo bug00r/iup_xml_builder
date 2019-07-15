@@ -87,7 +87,7 @@ test_xml_builder: mkbuilddir $(BUILDPATH)$(BIN)
 	#$(BUILDPATH)test_xml_builder.exe
 
 $(BUILDPATH)$(PREVIEW_BIN):
-	$(CC) $(CFLAGS) $(PREVIEW_SRC) $(RES_O_PATH) -o $(BUILDPATH)$(PREVIEW_BIN) -I./src/ $(INCLUDEDIR) $(USED_LIBSDIR) -static $(USED_LIBS) $(debug)
+	$(CC) $(CFLAGS) $(PREVIEW_SRC) $(RES_O_PATH) -o $(BUILDPATH)$(PREVIEW_BIN) -I./src/ $(INCLUDEDIR) $(USED_LIBSDIR) -static $(USED_LIBS) $(debug) $(release)
 
 .PHONY: clean mkbuilddir small
 

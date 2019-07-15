@@ -924,7 +924,7 @@ iup_xml_builder_t* iup_xml_builder_new() {
         newbuilder->handlelinks = dl_list_new();
         newbuilder->current_handle_links = dl_list_new();
         newbuilder->parsed = IupUser();
-        newbuilder->handles = NULL;//IupUser();
+        newbuilder->handles = NULL;
         newbuilder->callbacks = IupUser();
         newbuilder->userdata = IupUser();
         newbuilder->cntparsed = 0;
@@ -1146,7 +1146,7 @@ Ihandle* iup_xml_builder_get_result_new(iup_xml_builder_t *builder, const char *
 void iup_xml_builder_free_result(Ihandle **result) {
     if (result != NULL && *result != NULL) {
         Ihandle *to_delete = *result;
-        IupDestroy((Ihandle*)IupGetAttribute(to_delete, "handles"));
+        IupDestroy((Ihandle*)IupGetAttribute(to_delete, "handle"));
         IupDestroy(to_delete);
         *result = NULL;
     }
@@ -1195,6 +1195,7 @@ void iup_xml_builder_free(iup_xml_builder_t **builder) {
 
         IupDestroy(to_delete->callbacks);
         IupDestroy(to_delete->userdata);
+        IupDestroy(to_delete->handles);
 
         char **names = malloc( to_delete->cntparsed * sizeof(char *) );
 
@@ -1202,6 +1203,8 @@ void iup_xml_builder_free(iup_xml_builder_t **builder) {
 
         for (int handle = 0; handle < cntnames; ++handle) {
             
+            DEBUG_LOG_ARGS("remove: %s\n", names[handle]);
+
             Ihandle *entity = (Ihandle*)IupGetAttribute(to_delete->parsed, names[handle] );
             
             iup_xml_builder_free_result(&entity);

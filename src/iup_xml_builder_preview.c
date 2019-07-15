@@ -24,6 +24,18 @@ static bool _iup_xb_prev_add_err(iup_xml_builder_t *builder, Ihandle *log) {
     return logged;
 }
 
+int on_close_preview_dlg(Ihandle *ih) {
+
+    iup_xml_builder_t *builder = (iup_xml_builder_t *)IupGetAttribute(ih, "builder");
+
+    iup_xml_builder_free(&builder);
+
+    IupDestroy(ih);
+
+    return IUP_IGNORE;
+}
+
+
 static int _iup_xb_prev_show_preview(Ihandle *ih) {
 
     IupSetAttribute(ih, "ACTIVE", "NO");
@@ -59,13 +71,14 @@ static int _iup_xb_prev_show_preview(Ihandle *ih) {
                     IupSetAttribute(dialog, "SIZE", "HALFxHALF");
                 }
 
+                IupSetCallback(dialog, "CLOSE_CB", (Icallback) on_close_preview_dlg);
+                IupSetAttribute(dialog, "builder", (void*)builder);
+
                 IupShowXY(dialog, IUP_CENTER, IUP_CENTER);
 
             }
 
         } 
-
-        iup_xml_builder_free(&builder);
 
     }
 
@@ -109,9 +122,9 @@ int main(int argc, char **argv) {
 
     IupShowXY(main_, IUP_CENTER, IUP_CENTER);
 
-    iup_xml_builder_free(&builder);
+    IupMainLoop(); 
 
-    IupMainLoop();
+    iup_xml_builder_free(&builder);
 
     IupClose();
 
