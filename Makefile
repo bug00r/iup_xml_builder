@@ -40,7 +40,7 @@ BIN=lib$(LIBNAME).a
 
 ONW_LIBS=dl_list utils
 IUP_LIBS=cdcontextplus gdiplus im iupcd iup cd
-THIRD_PARTY_LIBS=exslt xslt xml2 archive crypto nettle regex lzma z lz4 bz2 bcrypt freetype6 iconv
+THIRD_PARTY_LIBS=exslt xslt xml2 archive crypto nettle regex zstd lzma z lz4 bz2 bcrypt freetype6 iconv
 REGEX_LIBS=pcre2-8
 #this c flags is used by regex lib
 CFLAGS+=-DPCRE2_STATIC
