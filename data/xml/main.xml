@@ -18,24 +18,11 @@
                         <label>
                             <attr name="TITLE" value="line: "/>
                         </label>
-                        <label name="line">
-                            <attr name="TITLE" value="-"/>
-                            <attr name="RASTERSIZE" value="30"/>
-                        </label>
-                        <label>
-                            <attr name="TITLE" value="Col: "/>
-                        </label>
-                        <label name="col">
-                            <attr name="TITLE" value="-"/>
-                            <attr name="RASTERSIZE" value="30"/>
-                        </label>
-                        <label>
-                            <attr name="TITLE" value="Pos: "/>
-                        </label>
-                        <label name="pos">
-                            <attr name="TITLE" value="-"/>
-                            <attr name="RASTERSIZE" value="30"/>
-                        </label>
+                        <label name="line"><attrs value='TITLE=-, RASTERSIZE=30' /></label>
+                        <label><attr name="TITLE" value="Col: "/></label>
+                        <label name="col"><attrs value='TITLE=-, RASTERSIZE=30' /></label>
+                        <label><attr name="TITLE" value="Pos: "/></label>
+                        <label name="pos"><attrs value='TITLE=-, EXPAND=HORIZONTAL' /></label>
                     </hbox>
                 </vbox>
             </frame>
