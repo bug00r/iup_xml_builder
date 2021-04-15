@@ -1,0 +1,224 @@
+<!--
+    - iup: root of all iup depend configuration
+        
+        -resources: resource based configuration
+            DEF OF RESOURCE:
+                A Resource is a Data Structure with different type and source
+                    Example: type = XML, source: File, BLOB, Entry Database, File in Archive
+                    We need different Kind of Resources like:
+                        - text(language depend), xml, media: images(png, jpeg), all kind of binary data
+            - loader specified loader for customization(some defaults who can overridden)
+                A Loader need specific Information for loading process
+                    Source: From where the data should be read
+                    path: depend on Source
+
+        we could inline Hexing like this:
+
+            printf "#IFNDEF BLA_H\n#DEFINE BLA_H\n\n"  > test.h && 
+            xxd -i /c/dev/bin/Eula.txt >> test.h && 
+            printf "\n\n#ENDIF" >> test.h
+
+        We can register Resource at Runtime before parsing xml:
+
+            typedef strcut _IupResourceBase {
+                dl_list *errors;
+            } IupResourceBase;
+
+            iup_resource_add_error(IupResourceBase* resource, const unsigned char* errormessage);
+
+            typedef struct _IupResource {
+                /* should be available like this, otherwise you will got segfaults*/
+                IupResourceBase _base; 
+                /* This is the created resource Object and the return value of the init method.
+                   You have to mangage the memory by yourself and should be free'd in cleanup.
+                 */
+                void* resObj;
+                /* These are the needed init params for the resource.
+                   You have to mangage the memory by yourself and should be free'd in cleanup.
+                 */
+                void* init_params;
+                /* This Functions initialized the Resource Object with the given init Parameter. 
+                   This will be called during "builder_add_resource".
+                */
+                void* (*init)   (IupResource* resource, void* init_params);
+                /* This is the cleanup method for housekeeping memory. */
+                void* (*cleanup)(IupResource* resource);
+                /* This function took a resource name and return the spcific resource as 
+                   implemented in get, usually multiply types */
+                void* (*get)    (IupResource* resource, unsigned char* res_name);
+            } IupResource;
+            
+            typedef IupResource* (*iupResourceFactoryMethod)(unsigned char* type);
+            builder_add_factory(const unsigned char* type, iupResourceFactoryMethod );
+            builder_add_resource(builder_t *builder, 
+                                 const unsigned char* resourceName, 
+                                 const unsigned char* resourceType);
+
+
+            Used Code:
+
+            /* example for own resource factory. If any issues or error occur you should
+               add them to the Resource
+                    see: iup_resource_add_error(IupResourceBase* resource, unsigned char* errormessage);
+
+               If an error was registered the Resource is flagged a invalid with these mesages.
+
+               resource_type_id: used resource_id
+
+               return IupResource Object or NULL if no resource was found
+            */
+            IupResource* custom_resource_factory(unsigned char* type);
+
+            Builder *builder = builder_new();
+            builder_add_factory("myType", custom_resource_factory);
+            builder_add_resource(builder, 'resourceName', IupResourceType.[SomeType]);
+
+            //this is only an idea
+            builder_add_resource_blob(builder, 'resourceName', const unsigned char* bytes,
+                                      size_t cntBytes, bool should_clean_up);
+
+                resourceName: sould be unique otherwise it will be overridden
+                IupResourceType(these are built in types):
+                    FILE: Any Type of File,
+                    ARCHIVE: Some supported archives (zip as default)
+                /* this is custom usage because we can't know how these are handled.
+                   a Blob could be a Datasegment or preloaded Byte Array.
+                   Maybe we can set some support functions like:
+                        not the best function, will check later
+                        IupResource* iup_resource_blob_create(const unsigned char* bytes,
+                                                              size_t cntBytes,
+                                                              bool should_clean_up)
+                */
+                BLOB_FILE: file as registered blob,
+                BLOB_ARCHIVE: archive as registered blob
+-->
+<!--
+    Summary:
+        We want to add resources into xml files like see below. Resources are collections of
+        Data in several structures like:
+            image: 
+            properties: Key Value Pair files, accessible via key
+            xml: xml data structure, accessible via xpath and can also be properties
+            archive: a directory like container file. Accessible via path
+            database: a database like sqllite, accessible with statements (Optional)
+            default: This must not be set and the instance was handled as single byte instance
+
+            All of the Structures can be available as file or blob(preloaded bytes or
+            const byte data segment)
+        
+        each entry can be cached, but must not be, caching id default true but you can set to false
+
+        <resources>
+            //this is for plain complete image like image(raw), image-png, image-jpg ...
+            <resource [cache=false] id="res" struct="image[-[jpg|png...]]" type="file" path="[absolute|relative path]" />
+            <resource [cache=false] id="resb" struct="image[-[jpg|png...]]" type="blob" name="blobname" />
+                Usage:  //uses whole image
+                        <[attr|param]-image name="IMAGE" value="@res" />
+                        //this extracts an subimage from image @res at given position
+                        <[attr|param]-image name="IMAGE" value="@res" x="0" y="50" w="100" h="100" />
+
+
+            //this is for properties files
+            <resource [cache=false] id="res1" struct="properties" type="file" path="[absolute|relative path]" />
+            <resource [cache=false] id="res1b" struct="properties" type="blob" name="blobname" />
+                Usage:  //uses plain text myValue from given "key" from key=myValue 
+                        <[attr|param-str] name="TITLE" value="@res1" key="myKey" />
+                        //uses parameter text "my bla is blubb also foo" value from given "myKey" from myKey=my {1} is {2} also {3}
+                        <[attr|param-str] name="TITLE" value="@res1" key="myKey" params="bla,blubb,foo" />
+            
+            //this is for xml files
+            <resource [cache=false] id="res2" struct="xml" type="file" path="[absolute|relative path]" />
+            <resource [cache=false] id="res2b" struct="xml" type="blob" name="blobname" />
+                Usage:  //selects attribute valuelanguage target must be a attribute or text element node etc
+                        <[attr|param-str] name="TITLE" value="@res2" xpath="/*/book[1]/title/@lang" />
+                        <[attr|param-str] name="TITLE" value="@res2" xpath="//body//*[...]/text()" />
+                    
+            //this is for archive files
+            <resource [cache=false] id="res3" struct="archive" type="file" path="[absolute|relative path]" />
+            <resource [cache=false] id="res3b" struct="archive" type="blob" name="blobname" />
+                Usage: //Usually you can select single whole files or transform, but this is secondary
+                       <[attr|param]-image name="IMAGE" value="@res3" path="/path/to/image.png" />
+                       //you can use the given transforming for images like:
+                       <[attr|param]-image name="IMAGE" value="@res3" path="/path/to/image.png" 
+                                struct="image[-[jpg|png...]]" [ x="0" y="50" w="100" h="100"] />
+
+            //this is only an example for an third party extension ;)
+            //this is for database files (decision on which db like: db-sqllite, db-mssql ...)
+            <resource [cache=false] id="res4" struct="db-sqllite" type="file" path="[absolute|relative path|url]">
+                <credentials>
+                    <user>foo</user>
+                    <password>bar</password>
+                </credentials>
+            </resource>
+            <resource id="res4b" struct="db-sqllite" type="blob" name="blobname" >
+                <credentials>
+                    <user>foo</user>
+                    <password>bar</password>
+                </credentials>
+            </resource>
+        </resources>
+-->
+<iup>
+    <resources>
+        <!-- this is for plain complete image like image(raw), image-png, image-jpg ... -->
+        <resource [cache=false] id="res" struct="image[-[jpg|png...]]" type="file" path="[absolute|relative path]" />
+        <resource [cache=false] id="resb" struct="image[-[jpg|png...]]" type="blob" name="blobname" />
+        <!--Usage:  //uses whole image
+                    <[attr|param]-image name="IMAGE" value="@res" />
+                    //this extracts an subimage from image @res at given position
+                    <[attr|param]-image name="IMAGE" value="@res" x="0" y="50" w="100" h="100" />-->
+
+
+        <!--//this is for properties files-->
+        <resource [cache=false] id="res1" struct="properties" type="file" path="[absolute|relative path]" />
+        <resource [cache=false] id="res1b" struct="properties" type="blob" name="blobname" />
+        <!--Usage:  //uses plain text myValue from given "key" from key=myValue 
+                    <[attr|param-str] name="TITLE" value="@res1" key="myKey" />
+                    //uses parameter text "my bla is blubb also foo" value from given "myKey" from myKey=my {1} is {2} also {3}
+                    <[attr|param-str] name="TITLE" value="@res1" key="myKey" params="bla,blubb,foo" />-->
+        
+        <!--this is for xml files-->
+        <resource [cache=false] id="res2" struct="xml" type="file" path="[absolute|relative path]" />
+        <resource [cache=false] id="res2b" struct="xml" type="blob" name="blobname" />
+        <!--Usage:  //selects attribute valuelanguage target must be a attribute or text element node etc
+                    <[attr|param-str] name="TITLE" value="@res2" xpath="/*/book[1]/title/@lang" />
+                    <[attr|param-str] name="TITLE" value="@res2" xpath="//body//*[...]/text()" />-->
+                
+        <!--this is for archive files-->
+        <resource [cache=false] id="res3" struct="archive" type="file" path="[absolute|relative path]" />
+        <resource [cache=false] id="res3b" struct="archive" type="blob" name="blobname" />
+        <!--Usage: //Usually you can select single whole files or transform, but this is secondary
+                    <[attr|param]-image name="IMAGE" value="@res3" path="/path/to/image.png" />
+                    //you can use the given transforming for images like:
+                    <[attr|param]-image name="IMAGE" value="@res3" path="/path/to/image.png" 
+                            struct="image[-[jpg|png...]]" [ x="0" y="50" w="100" h="100"] />-->
+
+        <!--this is only an example for an third party extension ;)
+        //this is for database files (decision on which db like: db-sqllite, db-mssql ...)-->
+        <resource [cache=false] id="res4" struct="db-sqllite" type="file" path="[absolute|relative path|url]">
+            <credentials>
+                <user>foo</user>
+                <password>bar</password>
+            </credentials>
+        </resource>
+        <resource id="res4b" struct="db-sqllite" type="blob" name="blobname" >
+            <credentials>
+                <user>foo</user>
+                <password>bar</password>
+            </credentials>
+        </resource>
+    </resources>
+    <!-- In this uis Tag we will add all of our. It must be possible to create all of them beside and merge them.
+        in a usual way together.
+     -->
+    <uis>
+        <ui name="myDialog">
+        </ui>
+        <ui name="myFrame">
+        </ui>
+        <ui name="myPanel">
+        </ui>
+        <ui name="myComplexElement">
+        </ui>
+    </uis>
+</iup>
