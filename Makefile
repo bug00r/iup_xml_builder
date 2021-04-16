@@ -8,7 +8,32 @@ BUILDROOT=build
 BUILDDIR=$(BUILDROOT)$(PATHSEP)$(CC)
 BUILDPATH=$(BUILDDIR)$(PATHSEP)
 
-CFLAGS+=-std=c11 -Wall
+
+ifeq ($(DEBUG),1)
+	export debug=-ggdb -Ddebug=1
+	export isdebug=1
+endif
+
+ifeq ($(ANALYSIS),1)
+	export analysis=-Danalysis=1
+	export isanalysis=1
+endif
+
+ifeq ($(DEBUG),2)
+	export debug=-ggdb -Ddebug=2
+	export isdebug=1
+endif
+
+ifeq ($(DEBUG),3)
+	export debug=-ggdb -Ddebug=3
+	export isdebug=1
+endif
+
+ifeq ($(OUTPUT),1)
+	export outimg= -Doutput=1
+endif
+
+CFLAGS=-std=c11 -Wpedantic -Wall -Wextra
 
 LIB?=-L/c/dev/lib/
 INCLUDE?=-I/c/dev/include/
@@ -27,7 +52,7 @@ CFLAGS+=-DPCRE2_STATIC -DIN_LIBXML
 #-pg for profiling 
 
 INCLUDEDIR=-I./src $(INCLUDE)
-_SRC_FILES=iup_xml_builder
+_SRC_FILES=iup_xml_builder iup_resource
 
 SRC+=$(patsubst %,src/%,$(patsubst %,%.c,$(_SRC_FILES)))
 OBJ=$(patsubst %,$(BUILDPATH)/%,$(patsubst %,%.o,$(_SRC_FILES)))
@@ -61,6 +86,10 @@ test_xml_builder: mkbuilddir $(BUILDPATH)$(BIN)
 	$(CC) $(CFLAGS) ./test/test_xml_builder.c -o $(BUILDPATH)test_xml_builder.exe -I./src/ $(INCLUDEDIR) $(USED_LIBSDIR) -static $(USED_LIBS) $(debug)
 	-cp test/dialog.xml $(BUILDPATH)dialog.xml
 	-cp test/window.xml $(BUILDPATH)window.xml
+
+test_iup_resource: mkbuilddir $(BUILDPATH)$(BIN)
+	$(CC) $(CFLAGS) ./test/test_iup_resource.c -o $(BUILDPATH)test_iup_resource.exe -I./src/ $(INCLUDEDIR) $(USED_LIBSDIR) -static $(USED_LIBS) $(debug)
+	$(BUILDPATH)test_iup_resource.exe
 
 $(BUILDPATH)$(PREVIEW_BIN):
 	$(CC) $(CFLAGS) $(PREVIEW_SRC) $(RES_O_PATH) -o $(BUILDPATH)$(PREVIEW_BIN) -I./src/ $(INCLUDEDIR) $(USED_LIBSDIR) -static $(USED_LIBS) $(debug) $(release)
