@@ -112,4 +112,11 @@ small:
 	
 clean:
 	-rm -dr $(BUILDROOT)
+
+install:
+	mkdir -p $(INSTALL_ROOT)include
+	mkdir -p $(INSTALL_ROOT)lib$(BIT_SUFFIX)
+	cp ./src/iup_xml_builder.h $(INSTALL_ROOT)include/iup_xml_builder.h
+	cp $(BUILDPATH)$(BIN) $(INSTALL_ROOT)lib$(BIT_SUFFIX)/$(BIN)
+
 	
