@@ -1,41 +1,37 @@
-#export MAKE=mingw32-make
-AR=ar
-ARFLAGS=rcs
-PATHSEP=/
-CC=gcc
-BUILDROOT=build
+ARFLAGS?=rcs
+PATHSEP?=/
+BUILDROOT?=build
 
-BUILDDIR=$(BUILDROOT)$(PATHSEP)$(CC)
-BUILDPATH=$(BUILDDIR)$(PATHSEP)
+BUILDDIR?=$(BUILDROOT)$(PATHSEP)$(CC)
+BUILDPATH?=$(BUILDDIR)$(PATHSEP)
 
-ifeq ($(DEBUG),1)
-	export debug=-ggdb -Ddebug=1
-	export isdebug=1
+ifndef PREFIX
+	INSTALL_ROOT=$(BUILDPATH)
+else
+	INSTALL_ROOT=$(PREFIX)$(PATHSEP)
+	ifeq ($(INSTALL_ROOT),/)
+	INSTALL_ROOT=$(BUILDPATH)
+	endif
 endif
 
-ifeq ($(ANALYSIS),1)
-	export analysis=-Danalysis=1
-	export isanalysis=1
+ifdef DEBUG
+	CFLAGS+=-ggdb
+	ifeq ($(DEBUG),)
+	CFLAGS+=-Ddebug=1
+	else 
+	CFLAGS+=-Ddebug=$(DEBUG)
+	endif
 endif
 
-ifeq ($(DEBUG),2)
-	export debug=-ggdb -Ddebug=2
-	export isdebug=1
-endif
-
-ifeq ($(DEBUG),3)
-	export debug=-ggdb -Ddebug=3
-	export isdebug=1
-endif
-
-ifeq ($(OUTPUT),1)
-	export outimg= -Doutput=1
+ifeq ($(M32),1)
+	CFLAGS+=-m32
+	BIT_SUFFIX+=32
 endif
 
 CFLAGS=-std=c11 -Wpedantic -Wall -Wextra
 
-LIBSDIR?=-L/c/dev/lib/
-INCLUDE?=-I/c/dev/include/
+LDFLAGS+=-L./$(BUILDPATH) -L/c/dev/lib/
+CFLAGS+=-I./src -I/c/dev/include/
 
 ONW_LIBS=dl_list utils
 IUP_LIBS=cdcontextplus gdiplus im iupcd iup cd
@@ -43,14 +39,11 @@ THIRD_PARTY_LIBS=exslt xslt xml2 archive zstd lzma z lz4 bz2 freetype6 iconv
 REGEX_LIBS=pcre2-8
 OS_LIBS=kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32 uuid ole32 oleaut32 comctl32 ws2_32
 
-USED_LIBS=$(patsubst %,-l%,  $(NAME) $(ONW_LIBS) $(IUP_LIBS) $(REGEX_LIBS) $(THIRD_PARTY_LIBS) $(OS_LIBS) )
+LDFLAGS+=-static
+LDFLAGS+=$(patsubst %,-l%,  $(NAME) $(ONW_LIBS) $(IUP_LIBS) $(REGEX_LIBS) $(THIRD_PARTY_LIBS) $(OS_LIBS) )
 #pcre2 config
 CFLAGS+=-DPCRE2_STATIC -DIN_LIBXML
 
-#-ggdb  -mwindows
-#-pg for profiling 
-
-INCLUDEDIR=-I./src $(INCLUDE)
 _SRC_FILES=iup_xml_builder iup_resource
 
 SRC+=$(patsubst %,src/%,$(patsubst %,%.c,$(_SRC_FILES)))
@@ -58,8 +51,6 @@ OBJ=$(patsubst %,$(BUILDPATH)%,$(patsubst %,%.o,$(_SRC_FILES)))
 NAME=iup_xml_builder
 LIBNAME=lib$(NAME).a
 LIB=$(BUILDPATH)$(LIBNAME)
-
-USED_LIBSDIR=-L./$(BUILDPATH) $(LIBSDIR)
 
 RES=zip_resource
 RES_O=$(RES).o
@@ -81,19 +72,19 @@ $(LIB): $(OBJ)
 
 #@F = only filename, $(@F:.o=.c) replaces .o with .c
 $(OBJ):
-	$(CC) $(CFLAGS) -c src/$(@F:.o=.c) -o $@ $(INCLUDEDIR) $(debug)
+	$(CC) $(CFLAGS) -c src/$(@F:.o=.c) -o $@
 
 test_xml_builder: mkbuilddir $(LIB)
-	$(CC) $(CFLAGS) ./test/test_xml_builder.c -o $(BUILDPATH)test_xml_builder.exe -I./src/ $(INCLUDEDIR) $(USED_LIBSDIR) -static $(USED_LIBS) $(debug)
+	$(CC) $(CFLAGS) ./test/$@.c -o $(BUILDPATH)$@.exe $(LDFLAGS)
 	-cp test/dialog.xml $(BUILDPATH)dialog.xml
 	-cp test/window.xml $(BUILDPATH)window.xml
 
 test_iup_resource: mkbuilddir $(BUILDPATH)$(LIB)
-	$(CC) $(CFLAGS) ./test/test_iup_resource.c -o $(BUILDPATH)test_iup_resource.exe -I./src/ $(INCLUDEDIR) $(USED_LIBSDIR) -static $(USED_LIBS) $(debug)
-	$(BUILDPATH)test_iup_resource.exe
+	$(CC) $(CFLAGS) ./test/$@.c -o $(BUILDPATH)$@.exe $(LDFLAGS)
+	$(BUILDPATH)$@.exe
 
 $(PREVIEW_BIN):
-	$(CC) $(CFLAGS) $(PREVIEW_SRC) $(RES_O_PATH) -o $@ $(INCLUDEDIR) $(USED_LIBSDIR) -static $(USED_LIBS) $(debug) $(release)
+	$(CC) $(CFLAGS) $(PREVIEW_SRC) $(RES_O_PATH) -o $@ $(LDFLAGS)
 
 .PHONY: clean mkbuilddir small
 
