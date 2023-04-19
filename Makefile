@@ -33,7 +33,7 @@ ifeq ($(M32),1)
 	BIT_SUFFIX+=32
 endif
 
-CFLAGS=-std=c11 -Wpedantic -Wall -Wextra
+CFLAGS+=-std=c11 -Wpedantic -Wall -Wextra
 
 LDFLAGS+=-L./$(BUILDPATH) -L/c/dev/lib/
 CFLAGS+=-I./src -I/c/dev/include/
