@@ -29,7 +29,7 @@ typedef struct _IupResourceBase {
     /*
         A List with all occured errors.
     */
-    dl_list_t *errors;
+    DlList *errors;
 } iup_resource_base_t;
 
 typedef struct _IupResource {

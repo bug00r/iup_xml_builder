@@ -38,14 +38,14 @@ CFLAGS+=-std=c11 -Wpedantic -Wall -Wextra
 LDFLAGS+=-L./$(BUILDPATH) -L/c/dev/lib/
 CFLAGS+=-I./src -I/c/dev/include/
 
-ONW_LIBS=dl_list utils
+ONW_LIBS=dl_list xml_utils resource pcre2_utils
 IUP_LIBS=cdcontextplus gdiplus im iupcd iup cd
 THIRD_PARTY_LIBS=exslt xslt xml2 archive zstd lzma z lz4 bz2 freetype6 iconv
 REGEX_LIBS=pcre2-8
 OS_LIBS=kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32 uuid ole32 oleaut32 comctl32 ws2_32
 
 LDFLAGS+=-static
-LDFLAGS+=$(patsubst %,-l%,  $(NAME) $(ONW_LIBS) $(IUP_LIBS) $(REGEX_LIBS) $(THIRD_PARTY_LIBS) $(OS_LIBS) )
+LDFLAGS+=$(patsubst %,-l%,  $(NAME) $(ONW_LIBS) $(IUP_LIBS) $(REGEX_LIBS) $(THIRD_PARTY_LIBS) $(OS_LIBS) utils )
 #pcre2 config
 CFLAGS+=-DPCRE2_STATIC -DIN_LIBXML
 

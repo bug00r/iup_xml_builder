@@ -1,14 +1,14 @@
 #include "iup_xml_builder.h"
 
 typedef struct {
-    dl_list_t *params;
-    dl_list_t *attrs;
-    dl_list_t *attrs_handles;
-    dl_list_t *attrs_s;
-    dl_list_t *children;
-    dl_list_t *callbacks;
-    dl_list_t *userdata;
-    dl_list_t *handlelinks;
+    DlList *params;
+    DlList *attrs;
+    DlList *attrs_handles;
+    DlList *attrs_s;
+    DlList *children;
+    DlList *callbacks;
+    DlList *userdata;
+    DlList *handlelinks;
 } iup_xb_parse_entity_t;
 
 typedef struct {
@@ -230,7 +230,7 @@ static void iup_xb_delete_handle_lnk(void **data) {
     }
 }
 
-static void __iup_xb_clear_list(dl_list_t *list, void (*deletefunc)(void**)) {
+static void __iup_xb_clear_list(DlList *list, void (*deletefunc)(void**)) {
     dl_list_each(list, deletefunc);
     dl_list_clear(list);
 }
@@ -275,7 +275,7 @@ static void iup_xb_parse_entity_free(iup_xb_parse_entity_t **entity) {
 
 static void __iup_xml_builder_xml_res_free(iup_xml_builder_t *builder) {
     
-    dl_list_item_t* cur_node = builder->xml_res->first;
+    DlListItem* cur_node = builder->xml_res->first;
 
 	while(cur_node != NULL)   {
 		if ( cur_node->data != NULL ) {
@@ -402,7 +402,7 @@ static void __iup_xb_config_handlelinks(void **data, void * _params) {
     
     void **params = (void**)_params;
 
-    dl_list_t *handlelinks = (dl_list_t *)params[0];
+    DlList *handlelinks = (DlList *)params[0];
     Ihandle *handle = (Ihandle *)params[1];
 
     handlelink->target = handle;
@@ -415,7 +415,7 @@ static void __iup_xb_config_handlelinks_copy(void **data, void * _params) {
 
     iup_xb_handle_lnk_t * handlelink = (iup_xb_handle_lnk_t *)*data;
     
-    dl_list_t *handlelinks = (dl_list_t *)_params;
+    DlList *handlelinks = (DlList *)_params;
 
     dl_list_append(handlelinks, handlelink);
 
@@ -452,7 +452,7 @@ static Ihandle* __iup_xb_handle_from_node(iup_xml_builder_t *builder, iup_xb_ele
 
     xmlNodePtr node = element->node;
     if(node != NULL && conf_entity != NULL) {
-        dl_list_t *params_list = conf_entity->params;
+        DlList *params_list = conf_entity->params;
 
         char **params = NULL; 
         iup_xb_handle_t ** handle_w_name = NULL;
@@ -465,7 +465,7 @@ static Ihandle* __iup_xb_handle_from_node(iup_xml_builder_t *builder, iup_xb_ele
 
         if (params_list->cnt > 0) {
 
-            dl_list_item_t* cur_node = conf_entity->params->first;
+            DlListItem* cur_node = conf_entity->params->first;
 
             while(cur_node != NULL) {
                 
@@ -721,7 +721,7 @@ static iup_xb_attr_t* __iup_xb_callback_get(iup_xb_elem_t *elem) {
 
 }
 
-static void __iup_xb_set_attr_to_list(dl_list_t *list, iup_xb_elem_t *xb_element, iup_xb_attr_t* (*attr_func)(iup_xb_elem_t *xb_element)) {
+static void __iup_xb_set_attr_to_list(DlList *list, iup_xb_elem_t *xb_element, iup_xb_attr_t* (*attr_func)(iup_xb_elem_t *xb_element)) {
     iup_xb_attr_t *data = attr_func(xb_element);
                 
     if (data) {
@@ -729,7 +729,7 @@ static void __iup_xb_set_attr_to_list(dl_list_t *list, iup_xb_elem_t *xb_element
     }
 }
 
-static void __iup_xb_set_handle_to_list(dl_list_t *list, iup_xb_elem_t *elem, iup_xb_handle_lnk_t* (*attr_func)(iup_xb_elem_t *xb_element)) {
+static void __iup_xb_set_handle_to_list(DlList *list, iup_xb_elem_t *elem, iup_xb_handle_lnk_t* (*attr_func)(iup_xb_elem_t *xb_element)) {
     
     iup_xb_handle_lnk_t *data = attr_func(elem);
                 
@@ -738,7 +738,7 @@ static void __iup_xb_set_handle_to_list(dl_list_t *list, iup_xb_elem_t *elem, iu
     }
 }
 
-static void _iup_xb_create_set_handle(iup_xml_builder_t *builder, iup_xb_parse_entity_t* cur_entity, iup_xb_elem_t* xb_element, dl_list_t *handle_list,
+static void _iup_xb_create_set_handle(iup_xml_builder_t *builder, iup_xb_parse_entity_t* cur_entity, iup_xb_elem_t* xb_element, DlList *handle_list,
               IUP_XB_GET_VOID_FUNC get_func) {
     
     Ihandle * p_child = __iup_xb_parse_node(builder, cur_entity, xb_element);
@@ -1036,7 +1036,7 @@ static void __iup_xb_link_handler_global(iup_xml_builder_t *builder) {
 
 }
 
-static void __iup_xb_link_handler_local(dl_list_t *handlelinks, Ihandle *localhandles, Ihandle *parent) {
+static void __iup_xb_link_handler_local(DlList *handlelinks, Ihandle *localhandles, Ihandle *parent) {
 
     void *param[2] = {localhandles , parent};
 
@@ -1097,7 +1097,7 @@ void iup_xml_builder_parse(iup_xml_builder_t *builder) {
 
     if (builder == NULL) return;
 
-    dl_list_item_t* cur_node = builder->xml_res->first;
+    DlListItem* cur_node = builder->xml_res->first;
 	
     while(cur_node != NULL) {
 
