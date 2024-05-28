@@ -8,7 +8,7 @@
 static void test_xml_builder_alloc_free() {
     DEBUG_LOG(">>> \n");
 
-    iup_xml_builder_t *builder = iup_xml_builder_new();
+    IupXmlBuilder *builder = iup_xml_builder_new();
 
     assert(builder != NULL);
 
@@ -42,7 +42,7 @@ int test_callback_linkhandle_btn(Ihandle* ih) {
 static void test_xml_builder_parse_file() {
     DEBUG_LOG(">>>\n");
 
-    iup_xml_builder_t *builder = iup_xml_builder_new();
+    IupXmlBuilder *builder = iup_xml_builder_new();
 
     assert(builder != NULL);
 

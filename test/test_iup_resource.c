@@ -10,7 +10,7 @@
 static void test_iup_resource_alloc_free() {
     DEBUG_LOG(">>>\n");
 
-    iup_resource_t *resource = iup_resource_new();
+    IupResource *resource = iup_resource_new();
 
     assert(resource != NULL);
     assert(resource->_base.errors == NULL);
@@ -42,7 +42,7 @@ static void test_iup_resource_alloc_free() {
 static void test_iup_resource_init() {
     DEBUG_LOG(">>> \n");
 
-    iup_resource_t resource;
+    IupResource resource;
 
     iup_resource_init(&resource);
 
@@ -78,7 +78,7 @@ static void test_iup_resource_add_error_stack() {
     
     DEBUG_LOG(">>> \n");
 
-    iup_resource_t resource;
+    IupResource resource;
     iup_resource_init_default(&resource);
 
     iup_resource_add_error(&resource, (const unsigned char*)"error1");
@@ -105,7 +105,7 @@ static void test_iup_resource_add_error_heap() {
     
     DEBUG_LOG(">>> \n");
 
-    iup_resource_t *resource = iup_resource_new_default();
+    IupResource *resource = iup_resource_new_default();
 
     iup_resource_add_error(resource, (const unsigned char*)"error1");
     iup_resource_add_error(resource, (const unsigned char*)"error2");

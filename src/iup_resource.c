@@ -13,8 +13,8 @@ static void* __iup_res_get_default(struct _IupResource* resource,  unsigned char
     return NULL; 
 }
 
-static iup_resource_t* __iup_res_new() {
-    iup_resource_t *new_res = malloc(sizeof(iup_resource_t));
+static IupResource* __iup_res_new() {
+    IupResource *new_res = malloc(sizeof(IupResource));
     return new_res;
 }
 
@@ -22,21 +22,21 @@ static iup_resource_t* __iup_res_new() {
     ############ PUBLIC #############
 */
 
-iup_resource_t* iup_resource_new() {
-    iup_resource_t* new_res = __iup_res_new();
+IupResource* iup_resource_new() {
+    IupResource* new_res = __iup_res_new();
     iup_resource_init(new_res);
     return new_res;
 }
 
-iup_resource_t* iup_resource_new_default() {
-    iup_resource_t* new_res = __iup_res_new();
+IupResource* iup_resource_new_default() {
+    IupResource* new_res = __iup_res_new();
     iup_resource_init_default(new_res);
     return new_res;
 }
 
-void iup_resource_free(iup_resource_t** resource) {  
+void iup_resource_free(IupResource** resource) {  
 	if ( resource != NULL && *resource != NULL ) {
-		iup_resource_t *to_delete = *resource;
+		IupResource *to_delete = *resource;
 		
 		iup_resource_cleanup(to_delete);
 
@@ -46,7 +46,7 @@ void iup_resource_free(iup_resource_t** resource) {
 }
 
 
-void iup_resource_init(iup_resource_t* resource) {
+void iup_resource_init(IupResource* resource) {
     if (resource) {
         resource->_base.errors = NULL;
         resource->init_params = NULL;
@@ -57,7 +57,7 @@ void iup_resource_init(iup_resource_t* resource) {
     }
 }
 
-void iup_resource_init_default(iup_resource_t* resource) {
+void iup_resource_init_default(IupResource* resource) {
     if (resource) {
         resource->_base.errors = dl_list_new();
         resource->init_params = NULL;
@@ -68,14 +68,14 @@ void iup_resource_init_default(iup_resource_t* resource) {
     }
 }
 
-void iup_resource_cleanup(iup_resource_t* resource) {
+void iup_resource_cleanup(IupResource* resource) {
     if (resource) {
         dl_list_free(&resource->_base.errors);
         iup_resource_init(resource);
     }
 }
 
-void iup_resource_add_error(iup_resource_t* resource, const unsigned char* errormessage) {
+void iup_resource_add_error(IupResource* resource, const unsigned char* errormessage) {
     if (resource && resource->_base.errors && errormessage) {
         dl_list_append(resource->_base.errors, (void*) errormessage);
     }

@@ -13,7 +13,7 @@ void _iup_xb_prev_xml_err_to_handle(void **data, void *log) {
     }
 }
 
-static bool _iup_xb_prev_add_err(iup_xml_builder_t *builder, Ihandle *log) {
+static bool _iup_xb_prev_add_err(IupXmlBuilder *builder, Ihandle *log) {
     bool logged = false;
 
     if (log != NULL && builder->err->cnt > 0 ) {
@@ -26,7 +26,7 @@ static bool _iup_xb_prev_add_err(iup_xml_builder_t *builder, Ihandle *log) {
 
 int on_close_preview_dlg(Ihandle *ih) {
 
-    iup_xml_builder_t *builder = (iup_xml_builder_t *)IupGetAttribute(ih, "builder");
+    IupXmlBuilder *builder = (IupXmlBuilder *)IupGetAttribute(ih, "builder");
 
     iup_xml_builder_free(&builder);
 
@@ -50,7 +50,7 @@ static int _iup_xb_prev_show_preview(Ihandle *ih) {
 
     if (input_len > 0 ) {
 
-        iup_xml_builder_t *builder = iup_xml_builder_new();
+        IupXmlBuilder *builder = iup_xml_builder_new();
 
         iup_xml_builder_add_bytes(builder, "main",  xml_val, strlen(xml_val));
         
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
     
     XmlSource* xml_src = xml_source_from_resname(ar, "main");
 
-    iup_xml_builder_t *builder = iup_xml_builder_new();
+    IupXmlBuilder *builder = iup_xml_builder_new();
 
     iup_xml_builder_add_bytes(builder, "main",  (const char *)xml_src->src_data, *xml_src->src_size);
 
