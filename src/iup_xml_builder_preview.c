@@ -103,9 +103,9 @@ int main(int argc, char **argv) {
 
     IupSetGlobal("UTF8MODE", "YES"); 
 
-    archive_resource_t* ar = archive_resource_memory(&_binary_zip_resource_7z_start, (size_t)&_binary_zip_resource_7z_size);
+    ArchiveResource* ar = archive_resource_memory(&_binary_zip_resource_7z_start, (size_t)&_binary_zip_resource_7z_size);
     
-    xml_source_t* xml_src = xml_source_from_resname(ar, "main");
+    XmlSource* xml_src = xml_source_from_resname(ar, "main");
 
     iup_xml_builder_t *builder = iup_xml_builder_new();
 
